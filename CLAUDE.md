@@ -125,6 +125,31 @@ unzip -p ~/data/sharadar/raw/stocks.csv.zip | awk -F, 'NR>1{a[$1]}END{print leng
 "적재되었습니다" / "동작합니다" 는 근거가 아니다. 실제 실행 출력(행 수, 날짜 범위,
 테스트 결과)을 확인한 뒤에 완료라고 말한다.
 
+### 6. 무거운 실행은 메모리 상한 안에서 — 서버를 죽이지 않는다
+
+`opt-factor optimize` 는 RSS 8~12GB 를 쓴다. 이 저장소가 도는 머신은 RAM 15.4GB 다.
+2026-08-22 23:58, python3 잡 하나(anon-rss 8.8GB)가 스왑으로 넘어가면서 박스 전체가
+스래싱에 빠졌고 sshd 가 `fork()` 를 못 해 **접속 자체가 끊겼다.** OOM 로그의
+`task_memcg=/system.slice/ssh.service` 가 원인을 말한다 — **SSH 로 띄운 작업은
+sshd 와 같은 cgroup 을 공유한다.** 8/14~8/15 에도 `opt-factor` 가 같은 이유로 5회 죽었다.
+
+> 무거운 명령은 **`runbig` 으로 실행한다.** 앞에 단어 하나만 붙이면 된다.
+
+```sh
+runbig -m 10G -- opt-factor optimize --config configs/strategy_lean_timed.json
+journalctl --user -u <유닛명> -f      # 로그
+systemctl --user stop <유닛명>        # 중지
+```
+
+`runbig`(`~/.local/bin/runbig`)은 `systemd-run --user` 로 SSH cgroup **밖에** 유닛을 만들고
+`MemoryMax` + `MemorySwapMax=0` 을 건다. **스왑 차단이 핵심이다** — 스왑으로 도망가면
+그 작업만 죽는 게 아니라 박스 전체가 끌려간다. 부수 효과로 SSH 가 끊겨도 작업은 계속 돈다.
+
+**상한은 cgroup 총합이지 프로세스당이 아니다.** 에이전트를 병렬로 돌릴 때 각 작업에
+`-m` 을 따로 주더라도 동시 실행 합이 머신 RAM 을 넘으면 결국 누군가 죽는다.
+`알려진 제약` 의 "두 개를 동시에 돌리면 15GB 머신에서 죽는다" 가 그대로 적용된다 —
+**walk-forward 는 병렬로 돌리지 않는다.** 에이전트에게 작업을 시킬 때도 마찬가지다.
+
 ## 코드 규약
 
 - Python 3.10+, line-length **100**, ruff (lint + format), isort 는 ruff `I` 규칙이 담당.
