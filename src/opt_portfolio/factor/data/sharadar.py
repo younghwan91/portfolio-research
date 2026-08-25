@@ -81,6 +81,35 @@ _DIRECT_RENAME: dict[str, dict[str, str]] = {
     "SF3A": {"date": "calendardate"},
 }
 
+#: 같은 통일이 **벌크 CSV 에도 왔다** (2026-08-25 실측). 8/12 자 파일과 8/25 자
+#: 파일의 헤더를 대조하면 fundamentals 는 `datekey` → `date`, insiders 는
+#: `filingdate` → `date` 다. 나머지 6개 테이블은 변화 없다. 값 자체는 그대로다
+#: (KTII reportperiod=2010-01-02 → 2010-03-15, 양쪽 동일) — 순수 개명이다.
+#:
+#: 이걸 안 맞추면 `validate_pit_frame` 이 "PIT 계약 위반: 'datekey' 컬럼 누락"
+#: 으로 빌드를 세운다. **게이트가 제대로 막은 것이지 게이트의 잘못이 아니다** —
+#: PIT 컬럼은 look-ahead 를 막는 근거 자체라 없으면 적재해선 안 된다.
+_CSV_PIT_RENAME: dict[str, dict[str, str]] = {
+    "fundamentals": {"date": "datekey"},
+    "insiders": {"date": "filingdate"},
+}
+
+
+def _restore_pit_column(df: pd.DataFrame, kind: str) -> pd.DataFrame:
+    """벌크 CSV 의 통일된 'date' 를 스토어 표준 PIT 컬럼명으로 되돌린다.
+
+    **목적지 컬럼이 이미 있으면 건드리지 않는다** — 예전 형식(datekey 를 그대로
+    가진 파일)도 계속 읽혀야 한다. 손으로 받아둔 과거 벌크가 그 형식이다.
+    """
+    mapping = _CSV_PIT_RENAME.get(kind)
+    if not mapping:
+        return df
+    rename = {
+        src: dst for src, dst in mapping.items() if src in df.columns and dst not in df.columns
+    }
+    return df.rename(columns=rename) if rename else df
+
+
 #: 요청당 티커 개수 상한 — **벤더 하드 리밋** (2026-08-11 실측).
 #: 초과 시 400 {"error":"Too many tickers","description":"ticker accepts at most
 #: 30 tickers per request"}. 청크 크기는 이 값을 절대 넘을 수 없다.
@@ -311,7 +340,7 @@ class SharadarProvider:
         if kind not in readers:
             raise ValueError(f"알 수 없는 CSV 종류 '{kind}'. 지원: {sorted(readers)}")
         for chunk in pd.read_csv(path, chunksize=200_000):
-            yield from readers[kind](chunk)
+            yield from readers[kind](_restore_pit_column(chunk, kind))
 
     # ------------------------------------------------------------------ 내부
     def _paginate(

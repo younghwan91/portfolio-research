@@ -84,3 +84,70 @@ def test_tickers_csv_keeps_the_delisted_flag_reachable():
 
     assert "is_delisted" in out.columns
     assert out["is_delisted"].iloc[0] == "Y"
+
+
+# ---------------------------------------------------------- PIT 컬럼 개명 (8/25)
+
+
+def test_fundamentals_bulk_accepts_the_renamed_pit_column():
+    """벤더가 `datekey` 를 `date` 로 바꿨다 — 2026-08-12 vs 08-25 헤더 실측.
+
+    이걸 안 맞추면 `validate_pit_frame` 이 "PIT 계약 위반: 'datekey' 컬럼 누락"
+    으로 빌드를 세운다(실제로 2026-08-25 rebuild 가 여기서 죽었다).
+    """
+    from opt_portfolio.factor.data.sharadar import _restore_pit_column
+
+    frame = pd.DataFrame(
+        {
+            "ticker": ["KTII"],
+            "dimension": ["ARQ"],
+            "calendardate": ["2009-12-31"],
+            "date": ["2010-03-15"],
+            "reportperiod": ["2010-01-02"],
+        }
+    )
+
+    got = _restore_pit_column(frame, "fundamentals")
+
+    assert "datekey" in got.columns
+    assert got["datekey"].iloc[0] == "2010-03-15"
+    assert "date" not in got.columns
+
+
+def test_insiders_bulk_accepts_the_renamed_pit_column():
+    """같은 개명이 SF2 에도 왔다 — `filingdate` → `date`."""
+    from opt_portfolio.factor.data.sharadar import _restore_pit_column
+
+    frame = pd.DataFrame({"ticker": ["AAPL"], "date": ["2026-08-20"]})
+
+    got = _restore_pit_column(frame, "insiders")
+
+    assert got["filingdate"].iloc[0] == "2026-08-20"
+
+
+def test_the_old_header_still_loads():
+    """손으로 받아둔 과거 벌크는 아직 옛 이름이다 — 그것도 계속 읽혀야 한다."""
+    from opt_portfolio.factor.data.sharadar import _restore_pit_column
+
+    frame = pd.DataFrame(
+        {
+            "ticker": ["KTII"],
+            "datekey": ["2010-03-15"],
+            "reportperiod": ["2010-01-02"],
+        }
+    )
+
+    got = _restore_pit_column(frame, "fundamentals")
+
+    assert list(got.columns) == ["ticker", "datekey", "reportperiod"]
+
+
+def test_tables_without_a_pit_rename_are_untouched():
+    """8개 중 개명된 건 둘뿐이다 — 나머지에 손대면 조용히 컬럼이 사라진다."""
+    from opt_portfolio.factor.data.sharadar import _restore_pit_column
+
+    frame = pd.DataFrame({"ticker": ["AAPL"], "date": ["2026-08-24"], "close": [1.0]})
+
+    got = _restore_pit_column(frame, "prices")
+
+    assert "date" in got.columns
