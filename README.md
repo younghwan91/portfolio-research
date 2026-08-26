@@ -216,7 +216,7 @@ switched on.
 | | |
 |---|---|
 | **Window** | 23.6 years from 2002-12, 24 walk-forward folds. It contains three large drawdowns: 2008, 2020, 2022 |
-| **Data frozen** | Stops at 2026-08-14 (subscription ended). No further updates |
+| **Measurement window** | Everything reported here was measured on data through 2026-08-14. The store has since been rebuilt from vendor bulk (latest row 2026-08-24) and **the numbers have not been re-measured on it** |
 | **Taxes** | Not modelled |
 | **Costs** | Reported at both 15bps and 50bps. Realised spreads were never measured against the actual holdings |
 
@@ -256,11 +256,12 @@ Only factors with a documented rationale are included — Novy-Marx (2013), Sloa
 
 ## Usage
 
-> **The data in this repository stops at 2026-08-14.** The subscription has been
-> ended, so there are no further updates. Outputs live in [`results/`](results/),
-> which means the reported performance **can be checked but not re-run** — re-running
-> needs the subscription below. The vendor's raw data is a paid product and cannot
-> be redistributed; that is a licensing constraint, not a disclosure policy.
+> **Every number published here was measured on data through 2026-08-14.** The store
+> has since been rebuilt from vendor bulk (latest row 2026-08-24), but nothing in
+> [`results/`](results/) was re-measured on it. Those outputs are what ships, so the
+> reported performance **can be checked without vendor data**; re-running it needs the
+> subscription below. The vendor's raw data is a paid product and cannot be
+> redistributed; that is a licensing constraint, not a disclosure policy.
 >
 > **Data requirement.** The factor engine needs a [Sharadar](https://sharadar.com) subscription (Bundle, from $29/mo) — it is the only retail-priced source that provides point-in-time fundamentals *and* delisted coverage together. Without it the engine runs but has nothing to run on. The vendor adapter is isolated behind a neutral `Provider` protocol, so swapping in another source means rewriting one file. `taa/` uses the same Sharadar bulk (the funds tables). The only thing that runs without a subscription is the original VAA in `strategies/` (yfinance).
 
@@ -387,7 +388,7 @@ place pays nothing.** The premise does not match the era. Full diagnosis in the
 [design document](docs/superpowers/specs/2026-08-17-taa-strategy-design.md) §0 (Korean).
 
 > Separately, an earlier version of this README inflated the Sharpe by **20.9×** —
-> monthly returns annualized with √252 instead of √12 (fixed in `b9043d7`). Returns
+> monthly returns annualized with √252 instead of √12 (fixed in `685c0f3`). Returns
 > were right and only the risk metrics were wrong, which is why it survived so long.
 > Regression test: `tests/test_risk_annualization.py`.
 
@@ -509,7 +510,7 @@ src/opt_portfolio/
 
 ```bash
 make install        # uv sync --extra dev
-make test           # pytest + coverage (399 tests)
+make test           # pytest + coverage (403 tests)
 make lint           # ruff check + format --check
 make typecheck      # mypy src/
 ```
@@ -537,7 +538,7 @@ Design documents are written in Korean and live in [`docs/factor-system/`](docs/
 
 - **The window contains only three major drawdowns** (2008, 2020, 2022). A strategy whose claim is drawdown defence rests that claim on three events. This is the largest remaining limitation.
 - **Transaction costs are an assumption, not a measurement.** Both 15bps and 50bps are reported and the conclusion holds at either (DSR 0.996 / 0.988), but **the realised bid-ask spread of the actual holdings has never been measured.** The universe is the historical S&P 500, so this is less dangerous than it was for micro caps.
-- **Data stops at 2026-08-14** (subscription ended). No further updates — `ingest` now fails, and that is not a bug.
+- **The reported numbers stop at 2026-08-14.** Vendor bulk has moved on since (latest row 2026-08-24, loaded through `ingest --provider csv`), and nothing above has been re-measured on the newer data.
 - Taxes are not modelled.
 
 - **The factor set itself is not charged.** 124 factors were screened to arrive at the
@@ -554,7 +555,7 @@ Design documents are written in Korean and live in [`docs/factor-system/`](docs/
 
 - **Nothing was adopted, so there is no operating conclusion here.** PBO 0.770 was not relaxed.
 - 218 months of sample, containing the same three drawdowns.
-- The final month is **half a month** — the data stops on 2026-08-14, so `to_monthly` labels half a month's move as a full one. `run_taa.py` prints a warning.
+- The final month is **half a month** — the fund bulk these runs used stops on 2026-08-14, so `to_monthly` labels half a month's move as a full one. `run_taa.py` prints a warning.
 - Nothing before an ETF's listing is visible. The papers extend to the 1970s using index proxies; only real ETF prices were used here.
 
 **Original VAA (`strategies/`, kept for the record)**
