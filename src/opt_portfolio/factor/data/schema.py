@@ -309,8 +309,13 @@ _META = [
         "종목 식별자 (개명 추적)",
         sharadar="permaticker",
     ),
-    # `relatedtickers` — **같은 회사의 다른 주식 클래스를 묶는 키**다. 공백으로 구분된
+    # `relatedtickers` — 같은 회사의 다른 주식 클래스를 묶는 **보조** 키다. 공백으로 구분된
     # 형제 티커 목록이고 서로를 명시한다 (`CRD.A` → `"CRDA CRD CRD.B"`).
+    #
+    # **1차 키는 `secfilings` 의 CIK 이고 이쪽은 교차검증용이다.** 이 목록은 벤더가 손으로
+    # 유지하는 것이라 비대칭이거나 낡을 수 있고, 비상장 클래스까지 끌고 온다
+    # (FOX/FOXA 가 `FOXAV`·`FOXBV` 를 함께 싣는다). CIK 는 SEC 발행자 식별자라 정의상
+    # 회사 단위다.
     #
     # 왜 필요한가: Sharadar 는 SF1 재무를 클래스 하나에만 싣고(FOXA·CRD.A·HVT·NWSA),
     # DAILY 는 2종 주식에 시총을 아예 주지 않는다 (CLAUDE.md §2 실측). 그래서 부상장
@@ -328,8 +333,10 @@ _META = [
         sharadar="relatedtickers",
     ),
     # `secfilings` — SEC EDGAR URL 이고 그 안의 CIK 가 **회사 단위 정본 식별자**다.
-    # 클래스가 달라도 같다 (CRD.A·CRD.B 둘 다 CIK=0000025475). `relatedtickers` 가 비거나
-    # 어긋날 때 대조할 수 있는 두 번째 근거로 싣는다. 파싱은 소비자 쪽 몫이다.
+    # 클래스가 달라도 같다 (2026-08-27 원본 확인: FOX·FOXA 둘 다 CIK=0001754301,
+    # CRD.A·CRD.B 둘 다 0000025475, HVT·HVT.A 둘 다 0000216085, NWS·NWSA 둘 다 0001564708).
+    # **주 티커 판정은 이것을 1차로 쓰고 `relatedtickers` 로 교차검증한다.**
+    # 파싱은 소비자 쪽 몫이다 (`...&CIK=0001754301`).
     _f("secfilings", "meta", "daily", "TICKERS", "SEC EDGAR URL (CIK 포함)", sharadar="secfilings"),
 ]
 
