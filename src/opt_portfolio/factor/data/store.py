@@ -75,8 +75,14 @@ class PITStore:
         """`table` 에 없는 컬럼만 붙이고 붙인 이름을 돌려준다 (있으면 그대로 둔다).
 
         스키마가 자란 뒤 옛 DB 를 열었을 때 조용히 어긋나지 않게 하는 것이 목적이다.
-        **값을 채우지는 않는다** — 붙인 컬럼은 다음 적재까지 NULL 이고, 그 사실을 로그로
-        남긴다. 되메우려면 그 소스를 다시 적재해야 한다 (`opt-factor ingest --kind tickers`).
+
+        **값을 채우지 않고, 재적재로도 안 채워진다.** `tickers` 업서트는 `merge_fields=False`
+        라 `INSERT ... WHERE NOT EXISTS` 만 한다 — 이미 있는 티커 행은 건드리지 않으므로
+        `opt-factor ingest --kind tickers` 를 다시 돌려도 새 컬럼은 NULL 로 남는다.
+        채우려면 **스토어를 새로 짓거나** 해당 행을 지우고 다시 넣어야 한다.
+        (`~/data/us_micro.duckdb` 는 Airflow DAG 가 날마다 통째로 새로 지으므로 이 경로를
+        탈 일이 없다 — 이 함수가 값을 하는 곳은 로컬 연구용 DB·백업본처럼 **오래 사는**
+        스토어다.)
         """
         have = {
             str(r[0])
@@ -93,12 +99,12 @@ class PITStore:
             added.append(name)
         if added:
             logger.warning(
-                "%s: 스키마에 없던 컬럼 %d개를 붙였다 %s — 값은 비어 있다. "
-                "채우려면 그 소스를 다시 적재해라 (opt-factor ingest --kind %s).",
+                "%s: 스키마에 없던 컬럼 %d개를 붙였다 %s — 값은 비어 있고 **재적재로도 "
+                "안 채워진다** (기존 행은 업서트가 건드리지 않는다). 채우려면 스토어를 "
+                "새로 짓거나 해당 행을 지우고 다시 넣어라.",
                 table,
                 len(added),
                 added,
-                table,
             )
         return added
 

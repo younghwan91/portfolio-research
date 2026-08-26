@@ -298,20 +298,39 @@ _META = [
     ),
     _f("category", "meta", "daily", "TICKERS", "증권 유형 (ADR/PTP 식별)", sharadar="category"),
     _f("is_delisted", "meta", "daily", "TICKERS", "상장폐지 여부", sharadar="isdelisted"),
-    # 같은 회사의 **복수 주식 클래스를 묶는 유일한 키**다. Sharadar 는 SF1 재무를 주 티커
-    # 하나에만 싣고, DAILY 는 2종 주식에 시총을 아예 주지 않는다 (CLAUDE.md §2 실측).
-    # 그래서 `FOX`/`FOXA`, `CRD.A`/`CRD.B`, `HVT`/`HVT.A` 같은 짝에서 한쪽만 재무가 있고
-    # 다른 쪽은 전부 결측인 채로 소비자 화면에 올라온다 (macro-sector-agent 2026-08-27 보고:
-    # 한 실행에 10종목). 티커 문자열로 묶는 것은 안전하지 않다 — `NWS`/`NWSA` 는 몰라도
-    # `RDY` 같은 것은 규칙이 없다. 벤더가 주는 식별자를 그대로 싣는다.
+    # `permaticker` — **종목의 안정적 식별자**다. 티커가 바뀌어도(ARIA→ARIA1 등, CLAUDE.md §2)
+    # 같은 값을 유지하므로 개명 추적에 쓴다. **주식 클래스를 묶지는 못한다** — 2026-08-27
+    # 원본 확인: FOX=111122 vs FOXA=111125, CRD.B=119318 vs CRD.A=199806 으로 서로 다르다.
     _f(
         "permaticker",
         "meta",
         "daily",
         "TICKERS",
-        "회사 식별자 (복수 주식 클래스)",
+        "종목 식별자 (개명 추적)",
         sharadar="permaticker",
     ),
+    # `relatedtickers` — **같은 회사의 다른 주식 클래스를 묶는 키**다. 공백으로 구분된
+    # 형제 티커 목록이고 서로를 명시한다 (`CRD.A` → `"CRDA CRD CRD.B"`).
+    #
+    # 왜 필요한가: Sharadar 는 SF1 재무를 클래스 하나에만 싣고(FOXA·CRD.A·HVT·NWSA),
+    # DAILY 는 2종 주식에 시총을 아예 주지 않는다 (CLAUDE.md §2 실측). 그래서 부상장
+    # 클래스는 재무·시총이 전부 결측인 채로 소비자 화면에 올라온다
+    # (macro-sector-agent 2026-08-27: 한 실행에 10종목).
+    #
+    # 티커 문자열로 묶는 것은 안전하지 않다 — `NWS`/`NWSA` 는 몰라도 `RDY` 는 규칙이 없다.
+    # 벤더가 명시한 관계를 그대로 싣는다.
+    _f(
+        "relatedtickers",
+        "meta",
+        "daily",
+        "TICKERS",
+        "형제 티커 (복수 주식 클래스)",
+        sharadar="relatedtickers",
+    ),
+    # `secfilings` — SEC EDGAR URL 이고 그 안의 CIK 가 **회사 단위 정본 식별자**다.
+    # 클래스가 달라도 같다 (CRD.A·CRD.B 둘 다 CIK=0000025475). `relatedtickers` 가 비거나
+    # 어긋날 때 대조할 수 있는 두 번째 근거로 싣는다. 파싱은 소비자 쪽 몫이다.
+    _f("secfilings", "meta", "daily", "TICKERS", "SEC EDGAR URL (CIK 포함)", sharadar="secfilings"),
 ]
 
 FIELDS: dict[str, FieldSpec] = {
