@@ -298,6 +298,46 @@ _META = [
     ),
     _f("category", "meta", "daily", "TICKERS", "증권 유형 (ADR/PTP 식별)", sharadar="category"),
     _f("is_delisted", "meta", "daily", "TICKERS", "상장폐지 여부", sharadar="isdelisted"),
+    # `permaticker` — **종목의 안정적 식별자**다. 티커가 바뀌어도(ARIA→ARIA1 등, CLAUDE.md §2)
+    # 같은 값을 유지하므로 개명 추적에 쓴다. **주식 클래스를 묶지는 못한다** — 2026-08-27
+    # 원본 확인: FOX=111122 vs FOXA=111125, CRD.B=119318 vs CRD.A=199806 으로 서로 다르다.
+    _f(
+        "permaticker",
+        "meta",
+        "daily",
+        "TICKERS",
+        "종목 식별자 (개명 추적)",
+        sharadar="permaticker",
+    ),
+    # `relatedtickers` — 같은 회사의 다른 주식 클래스를 묶는 **보조** 키다. 공백으로 구분된
+    # 형제 티커 목록이고 서로를 명시한다 (`CRD.A` → `"CRDA CRD CRD.B"`).
+    #
+    # **1차 키는 `secfilings` 의 CIK 이고 이쪽은 교차검증용이다.** 이 목록은 벤더가 손으로
+    # 유지하는 것이라 비대칭이거나 낡을 수 있고, 비상장 클래스까지 끌고 온다
+    # (FOX/FOXA 가 `FOXAV`·`FOXBV` 를 함께 싣는다). CIK 는 SEC 발행자 식별자라 정의상
+    # 회사 단위다.
+    #
+    # 왜 필요한가: Sharadar 는 SF1 재무를 클래스 하나에만 싣고(FOXA·CRD.A·HVT·NWSA),
+    # DAILY 는 2종 주식에 시총을 아예 주지 않는다 (CLAUDE.md §2 실측). 그래서 부상장
+    # 클래스는 재무·시총이 전부 결측인 채로 소비자 화면에 올라온다
+    # (macro-sector-agent 2026-08-27: 한 실행에 10종목).
+    #
+    # 티커 문자열로 묶는 것은 안전하지 않다 — `NWS`/`NWSA` 는 몰라도 `RDY` 는 규칙이 없다.
+    # 벤더가 명시한 관계를 그대로 싣는다.
+    _f(
+        "relatedtickers",
+        "meta",
+        "daily",
+        "TICKERS",
+        "형제 티커 (복수 주식 클래스)",
+        sharadar="relatedtickers",
+    ),
+    # `secfilings` — SEC EDGAR URL 이고 그 안의 CIK 가 **회사 단위 정본 식별자**다.
+    # 클래스가 달라도 같다 (2026-08-27 원본 확인: FOX·FOXA 둘 다 CIK=0001754301,
+    # CRD.A·CRD.B 둘 다 0000025475, HVT·HVT.A 둘 다 0000216085, NWS·NWSA 둘 다 0001564708).
+    # **주 티커 판정은 이것을 1차로 쓰고 `relatedtickers` 로 교차검증한다.**
+    # 파싱은 소비자 쪽 몫이다 (`...&CIK=0001754301`).
+    _f("secfilings", "meta", "daily", "TICKERS", "SEC EDGAR URL (CIK 포함)", sharadar="secfilings"),
 ]
 
 FIELDS: dict[str, FieldSpec] = {

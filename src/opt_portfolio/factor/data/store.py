@@ -71,6 +71,43 @@ class PITStore:
     def __exit__(self, *exc: object) -> None:
         self.close()
 
+    def _add_missing_columns(self, table: str, want: dict[str, str]) -> list[str]:
+        """`table` 에 없는 컬럼만 붙이고 붙인 이름을 돌려준다 (있으면 그대로 둔다).
+
+        스키마가 자란 뒤 옛 DB 를 열었을 때 조용히 어긋나지 않게 하는 것이 목적이다.
+
+        **값을 채우지 않고, 재적재로도 안 채워진다.** `tickers` 업서트는 `merge_fields=False`
+        라 `INSERT ... WHERE NOT EXISTS` 만 한다 — 이미 있는 티커 행은 건드리지 않으므로
+        `opt-factor ingest --kind tickers` 를 다시 돌려도 새 컬럼은 NULL 로 남는다.
+        채우려면 **스토어를 새로 짓거나** 해당 행을 지우고 다시 넣어야 한다.
+        (`~/data/us_micro.duckdb` 는 Airflow DAG 가 날마다 통째로 새로 지으므로 이 경로를
+        탈 일이 없다 — 이 함수가 값을 하는 곳은 로컬 연구용 DB·백업본처럼 **오래 사는**
+        스토어다.)
+        """
+        have = {
+            str(r[0])
+            for r in self.conn.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = ?",
+                [table],
+            ).fetchall()
+        }
+        added: list[str] = []
+        for name, sqltype in want.items():
+            if name in have:
+                continue
+            self.conn.execute(f'ALTER TABLE {table} ADD COLUMN "{name}" {sqltype}')
+            added.append(name)
+        if added:
+            logger.warning(
+                "%s: 스키마에 없던 컬럼 %d개를 붙였다 %s — 값은 비어 있고 **재적재로도 "
+                "안 채워진다** (기존 행은 업서트가 건드리지 않는다). 채우려면 스토어를 "
+                "새로 짓거나 해당 행을 지우고 다시 넣어라.",
+                table,
+                len(added),
+                added,
+            )
+        return added
+
     # ------------------------------------------------------------------ DDL
     def _init_schema(self) -> None:
         def cols(fields: list[str]) -> str:
@@ -124,6 +161,11 @@ class PITStore:
         self.conn.execute(
             f"CREATE TABLE IF NOT EXISTS tickers (ticker VARCHAR NOT NULL, {meta_cols})"
         )
+        # `CREATE TABLE IF NOT EXISTS` 는 **이미 있는 표에 새 컬럼을 만들지 않는다.**
+        # 스키마에 필드를 하나 더해도 기존 DB 는 옛 컬럼 집합 그대로라, 업서트가 깨지거나
+        # (더 나쁘게) 그 필드가 조용히 빈 채로 남는다 — 이 저장소의 지배적 실패 유형이다
+        # (`CLAUDE.md` §1). 열 때마다 대조해서 없는 것만 붙이고, **붙였으면 말한다.**
+        self._add_missing_columns("tickers", {f: "VARCHAR" for f in META_FIELDS})
         # 이벤트 테이블 — 문자열 action 과 수치 value 가 섞여 _upsert 의
         # 일괄 형변환에 맞지 않으므로 전용 DDL·업서트를 쓴다.
         self.conn.execute(
