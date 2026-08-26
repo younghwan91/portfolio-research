@@ -71,6 +71,37 @@ class PITStore:
     def __exit__(self, *exc: object) -> None:
         self.close()
 
+    def _add_missing_columns(self, table: str, want: dict[str, str]) -> list[str]:
+        """`table` 에 없는 컬럼만 붙이고 붙인 이름을 돌려준다 (있으면 그대로 둔다).
+
+        스키마가 자란 뒤 옛 DB 를 열었을 때 조용히 어긋나지 않게 하는 것이 목적이다.
+        **값을 채우지는 않는다** — 붙인 컬럼은 다음 적재까지 NULL 이고, 그 사실을 로그로
+        남긴다. 되메우려면 그 소스를 다시 적재해야 한다 (`opt-factor ingest --kind tickers`).
+        """
+        have = {
+            str(r[0])
+            for r in self.conn.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = ?",
+                [table],
+            ).fetchall()
+        }
+        added: list[str] = []
+        for name, sqltype in want.items():
+            if name in have:
+                continue
+            self.conn.execute(f'ALTER TABLE {table} ADD COLUMN "{name}" {sqltype}')
+            added.append(name)
+        if added:
+            logger.warning(
+                "%s: 스키마에 없던 컬럼 %d개를 붙였다 %s — 값은 비어 있다. "
+                "채우려면 그 소스를 다시 적재해라 (opt-factor ingest --kind %s).",
+                table,
+                len(added),
+                added,
+                table,
+            )
+        return added
+
     # ------------------------------------------------------------------ DDL
     def _init_schema(self) -> None:
         def cols(fields: list[str]) -> str:
@@ -124,6 +155,11 @@ class PITStore:
         self.conn.execute(
             f"CREATE TABLE IF NOT EXISTS tickers (ticker VARCHAR NOT NULL, {meta_cols})"
         )
+        # `CREATE TABLE IF NOT EXISTS` 는 **이미 있는 표에 새 컬럼을 만들지 않는다.**
+        # 스키마에 필드를 하나 더해도 기존 DB 는 옛 컬럼 집합 그대로라, 업서트가 깨지거나
+        # (더 나쁘게) 그 필드가 조용히 빈 채로 남는다 — 이 저장소의 지배적 실패 유형이다
+        # (`CLAUDE.md` §1). 열 때마다 대조해서 없는 것만 붙이고, **붙였으면 말한다.**
+        self._add_missing_columns("tickers", {f: "VARCHAR" for f in META_FIELDS})
         # 이벤트 테이블 — 문자열 action 과 수치 value 가 섞여 _upsert 의
         # 일괄 형변환에 맞지 않으므로 전용 DDL·업서트를 쓴다.
         self.conn.execute(
