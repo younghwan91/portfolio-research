@@ -1,0 +1,84 @@
+name: Commit Identity Guard
+
+# 커밋 작성자/커미터 이메일이 허용 목록에 없으면 실패한다.
+#
+# 2026-08-29 사고: Claude Code 세션들이 세션 컨텍스트에 주어진 사용자 이메일
+# (회사 주소)을 git 커밋 신원으로 오용해, `git -c user.email=<회사주소> commit`
+# 형태로 커밋했다. 레포 로컬·전역 설정은 개인 이메일로 올바랐지만 명령줄이 그걸
+# 덮었다. 그 결과 6개 레포에 회사 이메일 커밋이 쌓였고 3개는 PUBLIC 상태였다.
+#
+# 설정으로는 막을 수 없다(`-c`가 항상 이긴다). 그래서 CI에서 막는다.
+#
+# 허용 목록을 바꾸려면 ALLOWED_EMAILS를 수정하라.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check-identity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: 커밋 신원 검사
+        env:
+          # 개인 이메일 + GitHub noreply만 허용
+          ALLOWED_EMAILS: |
+            chyohw97@gmail.com
+            48156556+younghwan91@users.noreply.github.com
+            noreply@anthropic.com
+        run: |
+          set -euo pipefail
+
+          # PR이면 base..head, push면 이번에 밀린 커밋만 본다.
+          # 히스토리 전체를 검사하면 과거 사고 때문에 영원히 실패한다.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] \
+               && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+          else
+            # 새 브랜치/강제 푸시 등 before를 못 쓰는 경우: 최근 50개만
+            RANGE="$(git rev-list -n 50 ${{ github.sha }} | tail -1)^..${{ github.sha }}" || RANGE="${{ github.sha }}"
+          fi
+
+          echo "검사 범위: $RANGE"
+          echo
+
+          # 허용 목록을 정규화 (빈 줄·공백 제거)
+          ALLOWED=$(echo "$ALLOWED_EMAILS" | tr -d ' ' | grep -v '^$' | sort -u)
+          echo "허용된 이메일:"
+          echo "$ALLOWED" | sed 's/^/  /'
+          echo
+
+          BAD=0
+          while IFS='|' read -r sha author committer subject; do
+            [ -z "$sha" ] && continue
+            for email in "$author" "$committer"; do
+              if ! echo "$ALLOWED" | grep -Fxq "$email"; then
+                echo "::error::${sha:0:8} 허용되지 않은 이메일: $email  ($subject)"
+                BAD=1
+              fi
+            done
+          done < <(git log --format='%H|%ae|%ce|%s' "$RANGE" 2>/dev/null || true)
+
+          if [ "$BAD" -eq 1 ]; then
+            echo
+            echo "커밋 신원이 허용 목록에 없다. 회사/조직 이메일이 섞였을 가능성이 높다."
+            echo
+            echo "고치는 법:"
+            echo "  git config user.email chyohw97@gmail.com"
+            echo "  git rebase -i --exec 'git commit --amend --reset-author --no-edit' <base>"
+            echo "  git push --force-with-lease"
+            echo
+            echo "주의: 'git -c user.email=...' 로 신원을 덮어쓰지 말 것."
+            exit 1
+          fi
+
+          echo "✅ 커밋 신원 이상 없음"
