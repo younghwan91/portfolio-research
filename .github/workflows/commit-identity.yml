@@ -10,6 +10,7 @@ name: Commit Identity Guard
 # 설정으로는 막을 수 없다(`-c`가 항상 이긴다). 그래서 CI에서 막는다.
 #
 # 허용 목록을 바꾸려면 ALLOWED_EMAILS를 수정하라.
+# dependabot[bot] 은 봇 신원이다 — 회사 주소가 아니라서 허용한다.
 
 on:
   push:
@@ -20,6 +21,8 @@ permissions:
 
 jobs:
   check-identity:
+    # 브랜치·태그 삭제 푸시엔 검사할 커밋도, checkout 할 ref 도 없다.
+    if: ${{ !github.event.deleted }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -28,11 +31,15 @@ jobs:
 
       - name: 커밋 신원 검사
         env:
-          # 개인 이메일 + GitHub noreply만 허용
+          # 개인 이메일 + GitHub noreply만 허용.
+          # noreply@github.com 은 GitHub 머지 버튼이 만드는 커밋의 신원이다
+          # (Merge pull request #N ...). 회사 주소가 아니라 GitHub 자신이다.
           ALLOWED_EMAILS: |
             chyohw97@gmail.com
             48156556+younghwan91@users.noreply.github.com
             noreply@anthropic.com
+            noreply@github.com
+            49699333+dependabot[bot]@users.noreply.github.com
         run: |
           set -euo pipefail
 
@@ -40,6 +47,16 @@ jobs:
           # 히스토리 전체를 검사하면 과거 사고 때문에 영원히 실패한다.
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             RANGE="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            # 태그 푸시는 새 커밋을 만들지 않는다. before 가 0 이라 아래 폴백을 타면
+            # 히스토리 50개를 다시 훑고, 과거 머지 커밋 때문에 영원히 실패한다.
+            # 기본 브랜치에 아직 없는 커밋만 본다 (보통 0개).
+            BASE="origin/${{ github.event.repository.default_branch }}"
+            if git rev-parse --verify -q "$BASE" >/dev/null; then
+              RANGE="$BASE..${{ github.sha }}"
+            else
+              RANGE="${{ github.sha }}~1..${{ github.sha }}"
+            fi
           elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] \
                && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
             RANGE="${{ github.event.before }}..${{ github.sha }}"
