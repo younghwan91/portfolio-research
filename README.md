@@ -196,7 +196,8 @@ English: [`docs/journal/`](docs/journal/README.md) and
   in use, and no trial count pays for that search. The outer search over 35 strategies
   *is* charged (PBO 0.303 · DSR 0.982).
 - **Numbers stop at 2026-08-14** and nothing has been re-measured on newer bulk. The
-  Sharadar subscription ended, so `ingest` now fails by design. Taxes are not modelled.
+  store has kept rebuilding since via the shared `quant-airflow` pipeline — the
+  subscription is active and `ingest` does not fail. Taxes are not modelled.
 - TAA adopted nothing, so it has no operating conclusion. The original VAA in
   `strategies/` is in-sample on a different data source — for comparison use `taa/`.
 
