@@ -22,6 +22,37 @@ Three subsystems live in this repository.
 `factor.research.overfitting` (DSR and PBO). Not trusting performance produced without
 a gate is this repository's standing rule.
 
+```mermaid
+flowchart LR
+    subgraph Factor engine
+        SH[(Sharadar<br/>sf1 · sep · daily · actions)] -->|"opt-factor ingest"| STORE[(PITStore<br/>us.duckdb)]
+        STORE --> CTX["PanelContext<br/>(datekey-aligned, no look-ahead)"]
+        CTX --> DSL["Factor DSL<br/>158 factors, factor/library"]
+        DSL --> UNIV["Universe filters<br/>price · dollar-volume · sector"]
+        UNIV --> PIPE["FactorPipeline.run<br/>factor/pipeline.py"]
+        PIPE --> BT["Backtest engine<br/>factor/backtest"]
+        BT --> WF["walk-forward optimize<br/>opt-factor optimize"]
+        WF --> DSRF["DSR + PBO gate<br/>factor/research/overfitting.py"]
+        DSRF -->|"passes"| HOLD["opt-factor holdings<br/>trade plan"]
+    end
+
+    subgraph TAA allocation
+        FUNDS[(Sharadar funds bulk<br/>closeadj, 18 ETFs)] -->|"taa/data.py"| SIG["Signals<br/>13612w · sma13"]
+        SIG --> STRAT["StrategySpec registry<br/>9 pre-registered configs"]
+        STRAT --> TBT["Monthly backtest<br/>taa/backtest.py"]
+        TBT --> EVAL["evaluate_all + verdict<br/>taa/evaluate.py"]
+        EVAL --> DSRF
+    end
+
+    subgraph Original VAA
+        YF[(yfinance<br/>daily closes)] --> VAA["VAAStrategy<br/>strategies/vaa.py"]
+        VAA --> RUNPY["run.py / make run<br/>backtest + report"]
+    end
+```
+
+*The only cross-subsystem edge is TAA's evaluator feeding into the same DSR/PBO gate
+the factor engine uses — everything else runs on its own data and its own engine.*
+
 ---
 
 # 1. Factor engine
