@@ -8,72 +8,51 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
 
-Three subsystems live in this repository.
+This repo answers three separate questions with three separate subsystems, each measured
+against the same overfitting gate (Deflated Sharpe + PBO) so the results can be trusted
+rather than just produced.
 
 | | **Factor engine** (`factor/`) | **TAA allocation** (`taa/`) | **Original VAA** (`strategies/`) |
 |---|---|---|---|
-| Scope | US single stocks (20,931 tickers, 1997–2026) | 18 ETFs | 7–11 ETFs |
 | Question | Which stocks to buy | Which asset class to rotate into | (same — first attempt) |
+| Scope | US single stocks (20,931 tickers, 1997–2026) | 18 ETFs | 7–11 ETFs |
 | Data | Sharadar direct (point-in-time, delisted included) | Sharadar funds bulk (`closeadj`) | yfinance daily closes |
 | Entry point | `opt-factor` · `opt-factor-tui` | `scripts/run_taa.py` | `make run` · `run.py` |
 | Outcome | **1 adopted** (large-cap) | **0 adopted** — all 9 failed the PBO gate | Kept as the record of why it failed |
 
+**Start with the factor engine below** — it's the only subsystem with an adopted, live
+strategy. TAA and the original VAA are validation exercises kept because *what failed and
+why* is documented.
+
 **None of the three imports another**, with one exception: `taa/` →
-`factor.research.overfitting` (DSR and PBO). Not trusting performance produced without
-a gate is this repository's standing rule.
-
-```mermaid
-flowchart LR
-    subgraph Factor engine
-        SH[(Sharadar<br/>sf1 · sep · daily · actions)] -->|"opt-factor ingest"| STORE[(PITStore<br/>us.duckdb)]
-        STORE --> CTX["PanelContext<br/>(datekey-aligned, no look-ahead)"]
-        CTX --> DSL["Factor DSL<br/>158 factors, factor/library"]
-        DSL --> UNIV["Universe filters<br/>price · dollar-volume · sector"]
-        UNIV --> PIPE["FactorPipeline.run<br/>factor/pipeline.py"]
-        PIPE --> BT["Backtest engine<br/>factor/backtest"]
-        BT --> WF["walk-forward optimize<br/>opt-factor optimize"]
-        WF --> DSRF["DSR + PBO gate<br/>factor/research/overfitting.py"]
-        DSRF -->|"passes"| HOLD["opt-factor holdings<br/>trade plan"]
-    end
-
-    subgraph TAA allocation
-        FUNDS[(Sharadar funds bulk<br/>closeadj, 18 ETFs)] -->|"taa/data.py"| SIG["Signals<br/>13612w · sma13"]
-        SIG --> STRAT["StrategySpec registry<br/>9 pre-registered configs"]
-        STRAT --> TBT["Monthly backtest<br/>taa/backtest.py"]
-        TBT --> EVAL["evaluate_all + verdict<br/>taa/evaluate.py"]
-        EVAL --> DSRF
-    end
-
-    subgraph Original VAA
-        YF[(yfinance<br/>daily closes)] --> VAA["VAAStrategy<br/>strategies/vaa.py"]
-        VAA --> RUNPY["run.py / make run<br/>backtest + report"]
-    end
-```
-
-*The only cross-subsystem edge is TAA's evaluator feeding into the same DSR/PBO gate
-the factor engine uses — everything else runs on its own data and its own engine.*
+`factor.research.overfitting` (DSR and PBO gate).
 
 ---
 
-# 1. Factor engine
+## Quick start
 
-A cross-sectional US equity factor engine built so that results can be **trusted, not just produced**.
-One design principle drives everything: **never fail silently.**
+```bash
+make install  # uv sync --extra dev — requires uv (https://docs.astral.sh/uv/)
+make test     # pytest + coverage (403 tests) — sanity-check the install
+```
 
-## Why this engine
+No API key needed to explore the results that are already checked into the repo:
 
-Quant backtests fail in a small number of well-known ways. Each one is blocked structurally here.
+```bash
+# Reproduce the strategy-search cost (DSR/PBO) — reads only results/oos/, no vendor data
+uv run python scripts/strategy_search_cost.py
 
-| Common failure | How it is prevented |
-|---|---|
-| **Survivorship bias** — only today's survivors are in the sample | Delisted names retained (Enron, old American Airlines, Ambac verified present) |
-| **Look-ahead** — using numbers before they were public | Expressions cannot touch raw tables; everything passes through `PanelContext`, which enforces `datekey` alignment |
-| **Restatement contamination** — using revised figures | **First print wins** — only the number the market originally saw is stored |
-| **Silent truncation** — partial data reported as success | Pagination raises `TruncatedDataError` when the expected range isn't reached |
-| **Overfitting** — run hundreds of variants, report the best | **Deflated Sharpe Ratio** + **PBO** charge for the number of trials |
-| **In-sample performance reporting** | Official performance is **walk-forward only**; single backtests are labelled reference-only |
+# Original VAA strategy — free data (yfinance), interactive menu
+make run
+```
 
-## Performance
+Re-running the **factor engine** or **TAA** from scratch (ingesting fresh data,
+optimizing new configs) needs a [Sharadar](https://sharadar.com) subscription — see
+[Usage](#usage) below. Everything reported in this README was measured on data through
+2026-08-14, and the outputs in [`results/`](results/) are what ships, so the numbers can
+be checked without vendor data.
+
+## What it looks like when it works
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
@@ -113,6 +92,56 @@ reads only `results/oos/` and needs no vendor data.
 
 <!-- PERFORMANCE:END -->
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Factor engine
+        SH[(Sharadar<br/>sf1 · sep · daily · actions)] -->|"opt-factor ingest"| STORE[(PITStore<br/>us.duckdb)]
+        STORE --> CTX["PanelContext<br/>(datekey-aligned, no look-ahead)"]
+        CTX --> DSL["Factor DSL<br/>158 factors, factor/library"]
+        DSL --> UNIV["Universe filters<br/>price · dollar-volume · sector"]
+        UNIV --> PIPE["FactorPipeline.run<br/>factor/pipeline.py"]
+        PIPE --> BT["Backtest engine<br/>factor/backtest"]
+        BT --> WF["walk-forward optimize<br/>opt-factor optimize"]
+        WF --> DSRF["DSR + PBO gate<br/>factor/research/overfitting.py"]
+        DSRF -->|"passes"| HOLD["opt-factor holdings<br/>trade plan"]
+    end
+
+    subgraph TAA allocation
+        FUNDS[(Sharadar funds bulk<br/>closeadj, 18 ETFs)] -->|"taa/data.py"| SIG["Signals<br/>13612w · sma13"]
+        SIG --> STRAT["StrategySpec registry<br/>9 pre-registered configs"]
+        STRAT --> TBT["Monthly backtest<br/>taa/backtest.py"]
+        TBT --> EVAL["evaluate_all + verdict<br/>taa/evaluate.py"]
+        EVAL --> DSRF
+    end
+
+    subgraph Original VAA
+        YF[(yfinance<br/>daily closes)] --> VAA["VAAStrategy<br/>strategies/vaa.py"]
+        VAA --> RUNPY["run.py / make run<br/>backtest + report"]
+    end
+```
+
+---
+
+# 1. Factor engine
+
+A cross-sectional US equity factor engine built so that results can be **trusted, not just produced**.
+One design principle drives everything: **never fail silently.**
+
+## Why this engine
+
+Quant backtests fail in a small number of well-known ways. Each one is blocked structurally here.
+
+| Common failure | How it is prevented |
+|---|---|
+| **Survivorship bias** — only today's survivors are in the sample | Delisted names retained (Enron, old American Airlines, Ambac verified present) |
+| **Look-ahead** — using numbers before they were public | Expressions cannot touch raw tables; everything passes through `PanelContext`, which enforces `datekey` alignment |
+| **Restatement contamination** — using revised figures | **First print wins** — only the number the market originally saw is stored |
+| **Silent truncation** — partial data reported as success | Pagination raises `TruncatedDataError` when the expected range isn't reached |
+| **Overfitting** — run hundreds of variants, report the best | **Deflated Sharpe Ratio** + **PBO** charge for the number of trials |
+| **In-sample performance reporting** | Official performance is **walk-forward only**; single backtests are labelled reference-only |
+
 ## What was retired, and what it cost
 
 <picture>
@@ -129,10 +158,9 @@ the design document calls mandatory were switched on. They collapse it — **Sha
 moved to the large-cap strategy, which had always been measured with its guards on and
 so had never been compared on equal terms.
 
-Over twenty candidates were rejected at the Deflated Sharpe gate, the PBO number was
-published wrong twice before it was measured properly, and nine allocation
-configurations were pre-registered and all nine rejected. **The whole trail is written
-down:** [`docs/journal/`](docs/journal/README.md).
+Over twenty candidates were rejected at the Deflated Sharpe gate, and the PBO number
+was published wrong twice before it was measured properly. **The whole trail is
+written down:** [`docs/journal/`](docs/journal/README.md).
 
 ## Factor library — 158 factors
 
@@ -143,12 +171,10 @@ replications). Categories and counts: [`docs/factor-library.md`](docs/factor-lib
 
 ## Usage
 
-> **Every number here was measured on data through 2026-08-14**, and the outputs in
-> [`results/`](results/) are what ships — so the reported performance **can be checked
-> without vendor data.** Re-running it needs a [Sharadar](https://sharadar.com)
-> subscription, the only retail-priced source with point-in-time fundamentals *and*
-> delisted coverage. The adapter sits behind a neutral `Provider` protocol, so
-> swapping sources means rewriting one file.
+> Reproducing the ingest/optimize commands below needs a
+> [Sharadar](https://sharadar.com) subscription — the only retail-priced source with
+> point-in-time fundamentals *and* delisted coverage. The adapter sits behind a neutral
+> `Provider` protocol, so swapping sources means rewriting one file.
 
 ```bash
 # Ingest data (Sharadar subscription required)
@@ -175,9 +201,8 @@ adopted, rejected and retired alike, including the operating parameters.
 
 # 2. Tactical asset allocation (TAA)
 
-Rotating between 18 ETFs monthly rather than picking single stocks. **Nine
-configurations were pre-registered and all nine were rejected: PBO = 0.770.** The gate
-was not relaxed.
+Monthly rotation across 18 ETFs. **Nine pre-registered configurations, all nine
+rejected: PBO = 0.770.** The gate was not relaxed.
 
 That does not mean nothing works. All six BAA variants (Keller 2022) beat 60/40 on
 Calmar without exception, 0.535–0.812 against 0.354 — but PBO across just those six is
@@ -196,13 +221,11 @@ make run                            # original VAA (yfinance, kept for the recor
 
 ---
 
-## Install & develop
+## Develop
 
 ```bash
-make install        # uv sync --extra dev
-make test           # pytest + coverage (403 tests)
-make lint           # ruff check + format --check
-make typecheck      # mypy src/
+make lint       # ruff check + format --check
+make typecheck  # mypy src/
 ```
 
 Dependencies are managed with **uv** (`uv.lock`). Do not use `pip install`. Code lives
