@@ -34,10 +34,12 @@ jobs:
           # 개인 이메일 + GitHub noreply만 허용.
           # noreply@github.com 은 GitHub 머지 버튼이 만드는 커밋의 신원이다
           # (Merge pull request #N ...). 회사 주소가 아니라 GitHub 자신이다.
+          # 에이전트 신원(noreply@anthropic.com 등)은 **허용하지 않는다** — 커밋은
+          # 사람 이름으로 남아야 한다. 에이전트 기여는 author/committer 가 아니라
+          # Co-Authored-By 트레일러로 적는다(그건 이 검사가 보지 않는다).
           ALLOWED_EMAILS: |
             chyohw97@gmail.com
             48156556+younghwan91@users.noreply.github.com
-            noreply@anthropic.com
             noreply@github.com
             49699333+dependabot[bot]@users.noreply.github.com
         run: |
