@@ -20,12 +20,12 @@ make test        # pytest + coverage
 make test-one T=tests/factor/test_dsl.py::TestX::test_y
 make lint        # ruff check + ruff format --check
 make format      # ruff --fix + format
-make typecheck   # mypy src/
+make typecheck   # mypy src/ scripts/ + run.py — 트리 전체, 예외 없음
 ```
 
 패키지 관리는 **uv** 다 (`uv.lock`). `pip install` 하지 않는다.
 
-팩터 엔진 CLI: `opt-factor {ingest,status,validate,backtest,report,optimize}`.
+팩터 엔진 CLI: `opt-factor {factors,status,ingest,validate,backtest,holdings,report,pbo,optimize}`.
 전체 사용법은 `docs/factor-system/04-data-contract.md` §5 참조.
 
 ## 절대 규칙
@@ -175,9 +175,15 @@ systemctl --user stop <유닛명>        # 중지
 
 ## 알려진 제약
 
-- **데이터는 2026-08-14 에서 멈춰 있다.** Sharadar 구독을 종료했다 (2026-08-16).
-  스토어와 벌크는 로컬에 남아 있어 재실행은 되지만 **갱신은 안 된다.**
-  `ingest` 는 이제 실패하며, 그건 버그가 아니다.
+- **게시된 수치는 2026-08-14 까지의 데이터로 측정했고, 그 뒤 데이터로 재측정하지
+  않았다.** 구독은 살아 있고 `ingest` 도 실패하지 않는다 — 스토어
+  (`~/data/us_micro.duckdb`)는 `quant-airflow` 공유 파이프라인이 계속 재구축한다
+  (2026-10-05 실측: `prices` 20,969종목 · 1994-08-11 ~ **2026-09-10** · 4,535만행,
+  `fundamentals` 17,031종목 · 최신 `datekey` 2026-09-10). 이 항목은 한때 "구독을
+  종료했고 ingest 가 실패한다"고 적혀 있었는데 사실이 아니었다 — README 는
+  2026-08-26 에 정정됐지만 이 파일은 그대로 남아 두 문서가 넉 달간 서로 어긋났다.
+  **E안 성과를 2026-09 데이터로 다시 재는 일은 아직 하지 않았다** — 추론으로
+  채우지 않는다.
 
 - 데이터는 **풀 히스토리 번들**이다 — 20,931종목 / 1997~2026, 폐지 종목 포함
   (Enron·구 American Airlines·Ambac 실재 확인). **생존편향은 해소됐다.**
