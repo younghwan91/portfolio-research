@@ -12,10 +12,17 @@ Usage:
     python run.py --optimize   # Run optimization
 """
 
+from __future__ import annotations
+
 import argparse
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.opt_portfolio.analysis.backtest import BacktestResult
+    from src.opt_portfolio.analysis.optimizer import OptimizationResult
 
 
-def launch_cli():
+def launch_cli() -> None:
     """Launch the command line interface."""
     print("\n💻 Launching CLI...")
     from src.opt_portfolio.ui.cli import main
@@ -23,7 +30,7 @@ def launch_cli():
     main()
 
 
-def run_vaa_analysis():
+def run_vaa_analysis() -> str:
     """Run VAA analysis directly."""
     from datetime import date
 
@@ -37,7 +44,7 @@ def run_vaa_analysis():
     return result.selected_etf
 
 
-def run_dynamic_backtest():
+def run_dynamic_backtest() -> BacktestResult:
     """Run dynamic VAA backtest with default weights."""
     from src.opt_portfolio.analysis.backtest import BacktestEngine
 
@@ -61,7 +68,7 @@ def run_dynamic_backtest():
     return result
 
 
-def run_optimized_backtest():
+def run_optimized_backtest() -> tuple[BacktestResult, OptimizationResult]:
     """Run backtest with Sharpe Ratio optimization."""
     from src.opt_portfolio.analysis.backtest import BacktestEngine
 
@@ -89,7 +96,7 @@ def run_optimized_backtest():
     return result, opt_result
 
 
-def run_strategy_comparison():
+def run_strategy_comparison() -> dict[str, BacktestResult]:
     """Run comparison of different VAA strategies."""
     from src.opt_portfolio.analysis.backtest import BacktestEngine
 
@@ -112,7 +119,7 @@ def run_strategy_comparison():
     return results
 
 
-def plot_momentum():
+def plot_momentum() -> None:
     """Plot momentum history."""
     from datetime import date, timedelta
 
@@ -157,7 +164,7 @@ def plot_momentum():
         print("No data available.")
 
 
-def cache_management():
+def cache_management() -> None:
     """Cache management menu."""
     from src.opt_portfolio.core.cache import get_cache
 
@@ -183,7 +190,7 @@ def cache_management():
         cache.optimize()
 
 
-def main():
+def main() -> None:
     """Main entry point with menu."""
     parser = argparse.ArgumentParser(description="Optimal Portfolio Management System")
     parser.add_argument("--cli", action="store_true", help="Launch CLI")

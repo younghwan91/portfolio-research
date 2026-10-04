@@ -170,7 +170,9 @@ class MomentumAnalyzer:
 
         return df
 
-    def calculate_and_rank(self, tickers: list[str], end_date: date) -> tuple[pd.DataFrame, str]:
+    def calculate_and_rank(
+        self, tickers: list[str], end_date: date
+    ) -> tuple[pd.DataFrame, str | None]:
         """
         Calculate momentum and return ranked results with top pick.
 
@@ -179,7 +181,8 @@ class MomentumAnalyzer:
             end_date: Reference date
 
         Returns:
-            Tuple of (ranked_dataframe, top_ticker)
+            Tuple of (ranked_dataframe, top_ticker). top_ticker 는 유효한 종목이
+            하나도 없으면 None 이다.
         """
         performance = self.get_performance(tickers, end_date)
 
@@ -205,7 +208,7 @@ class MomentumAnalyzer:
 
         # Rank by momentum
         ranked = performance.sort_values("Momentum Score", ascending=False)
-        top_ticker = ranked.index[0] if not ranked.empty else None
+        top_ticker = str(ranked.index[0]) if not ranked.empty else None
 
         return ranked, top_ticker
 
@@ -335,4 +338,4 @@ class MomentumAnalyzer:
         if "Momentum Score" not in ranked_df.columns:
             return False
 
-        return (ranked_df["Momentum Score"] < 0).any()
+        return bool((ranked_df["Momentum Score"] < 0).any())

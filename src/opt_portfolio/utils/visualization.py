@@ -2,6 +2,9 @@
 Visualization utilities for portfolio management.
 """
 
+from typing import Any
+
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -56,11 +59,15 @@ def create_allocation_pie(
     sizes = list(allocations.values())
 
     # Colors
-    colors = plt.cm.Set3(np.linspace(0, 1, len(labels)))
+    cmap = matplotlib.colormaps["Set3"]
+    colors = [tuple(cmap(x)) for x in np.linspace(0, 1, len(labels))]
 
-    wedges, texts, autotexts = ax.pie(
+    # autopct 를 주면 런타임은 (wedges, texts, autotexts) 3-튜플을 돌려주지만
+    # matplotlib 스텁은 2-튜플 오버로드로 해석한다. 스텁과 다투지 않고 Any 로 받는다.
+    pie: Any = ax.pie(
         sizes, labels=labels, colors=colors, autopct="%1.1f%%", startangle=90, pctdistance=0.85
     )
+    autotexts = pie[2]
 
     # Style
     plt.setp(autotexts, size=10, weight="bold")
@@ -121,7 +128,7 @@ def create_momentum_chart(
     """
     fig, ax = plt.subplots(figsize=figsize)
 
-    colors = plt.cm.tab10(range(len(momentum_df.columns)))
+    colors = matplotlib.colormaps["tab10"](range(len(momentum_df.columns)))
     color_map = {col: colors[i] for i, col in enumerate(momentum_df.columns)}
 
     for column in momentum_df.columns:

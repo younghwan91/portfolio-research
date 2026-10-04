@@ -10,7 +10,7 @@ Supports dynamic VAA selection where the selected asset changes monthly.
 - 그리드 서치 + 경사하강법 조합으로 전역 최적해 탐색
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 import pandas as pd
@@ -32,9 +32,10 @@ class OptimizationResult:
     all_results: pd.DataFrame
 
     # Optimal allocation config
-    optimal_config: AllocationConfig = None
+    # __post_init__ 이 best_weights 로부터 만든다 — 생성자 인자가 아니다.
+    optimal_config: AllocationConfig = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.optimal_config = AllocationConfig.from_weights(
             vaa=self.best_weights.get("VAA", 0.5),
             spy=self.best_weights.get("SPY", 0.125),
@@ -204,7 +205,7 @@ class PortfolioOptimizer:
         """Calculate maximum drawdown from equity curve."""
         running_max = equity_curve.expanding().max()
         drawdown = (equity_curve - running_max) / running_max
-        return abs(drawdown.min())
+        return float(abs(drawdown.min()))
 
     def optimize(
         self,

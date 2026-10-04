@@ -11,6 +11,7 @@ with enhancements including OU-process forecasting for improved selection.
 """
 
 from datetime import date
+from typing import Any
 
 import pandas as pd
 
@@ -161,10 +162,11 @@ class VAAStrategy:
             tickers, start_date, end_date
         )
 
-        if hist_momentum.empty:
+        if hist_momentum.empty or self.forecaster is None:
             return {}
 
-        recommendations = {}
+        forecaster = self.forecaster
+        recommendations: dict[str, dict[str, Any]] = {}
 
         # Current scores
         current_scores = hist_momentum.iloc[-1]
@@ -179,10 +181,10 @@ class VAAStrategy:
             if len(series) < 30:
                 continue
 
-            f1 = self.forecaster.forecast(series, months=1)
-            f3 = self.forecaster.forecast(series, months=3)
-            f6 = self.forecaster.forecast(series, months=6)
-            delta = self.forecaster.forecast_delta(series, months=1)
+            f1 = forecaster.forecast(series, months=1)
+            f3 = forecaster.forecast(series, months=3)
+            f6 = forecaster.forecast(series, months=6)
+            delta = forecaster.forecast_delta(series, months=1)
 
             if "Forecast_1M" not in recommendations:
                 recommendations["Forecast_1M"] = {"scores": {}}
@@ -216,7 +218,7 @@ class VAAStrategy:
         """Select ETF based on specified strategy."""
 
         if strategy == StrategyType.CURRENT or not strategy_recs:
-            return ranked_df.index[0]
+            return str(ranked_df.index[0])
 
         strategy_map = {
             StrategyType.FORECAST_1M: "Forecast_1M",
@@ -227,9 +229,9 @@ class VAAStrategy:
 
         key = strategy_map.get(strategy)
         if key and key in strategy_recs:
-            return strategy_recs[key].get("asset", ranked_df.index[0])
+            return str(strategy_recs[key].get("asset", ranked_df.index[0]))
 
-        return ranked_df.index[0]
+        return str(ranked_df.index[0])
 
     def _print_analysis(
         self,

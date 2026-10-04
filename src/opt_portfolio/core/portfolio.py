@@ -13,6 +13,7 @@ calculating allocations, and tracking performance.
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
 import yfinance as yf
@@ -301,7 +302,7 @@ class Portfolio:
         available_cash = additional_cash + total_sales
 
         # Phase 2: Calculate buys
-        shortfalls = []
+        shortfalls: list[dict[str, Any]] = []
         for ticker, target_value in target_values.items():
             current_shares = self.positions.get(ticker, Position(ticker, 0)).shares
             current_value_ticker = current_shares * prices.get(ticker, 0)

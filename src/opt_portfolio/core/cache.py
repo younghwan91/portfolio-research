@@ -14,6 +14,7 @@ import logging
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import duckdb
 import pandas as pd
@@ -251,8 +252,8 @@ class DataCache:
         Returns:
             List of (start, end) tuples for missing ranges
         """
-        start_date = pd.to_datetime(start_date)
-        end_date = pd.to_datetime(end_date)
+        start = pd.to_datetime(start_date)
+        end = pd.to_datetime(end_date)
 
         # Check metadata
         meta = self.conn.execute(
@@ -265,20 +266,20 @@ class DataCache:
         ).df()
 
         if meta.empty:
-            return [(start_date, end_date)]
+            return [(start, end)]
 
         cached_start = pd.to_datetime(meta["earliest_date"].iloc[0])
         cached_end = pd.to_datetime(meta["latest_date"].iloc[0])
 
-        missing_ranges = []
+        missing_ranges: list[tuple[datetime, datetime]] = []
 
         # Need data before cached range
-        if start_date < cached_start:
-            missing_ranges.append((start_date, cached_start - timedelta(days=1)))
+        if start < cached_start:
+            missing_ranges.append((start, cached_start - timedelta(days=1)))
 
         # Need data after cached range
-        if end_date > cached_end:
-            missing_ranges.append((cached_end + timedelta(days=1), end_date))
+        if end > cached_end:
+            missing_ranges.append((cached_end + timedelta(days=1), end))
 
         return missing_ranges
 
@@ -307,16 +308,16 @@ class DataCache:
         if isinstance(tickers, str):
             tickers = [tickers]
 
-        start_date = pd.to_datetime(start_date)
-        end_date = pd.to_datetime(end_date)
+        start = pd.to_datetime(start_date)
+        end = pd.to_datetime(end_date)
 
         # Check what data we already have
-        cached_data = self.get_data(tickers, start_date, end_date)
+        cached_data = self.get_data(tickers, start, end)
 
         # Determine what's missing for each ticker
         tickers_to_fetch = []
         for ticker in tickers:
-            missing_ranges = self.get_missing_date_ranges(ticker, start_date, end_date)
+            missing_ranges = self.get_missing_date_ranges(ticker, start, end)
             if missing_ranges:
                 tickers_to_fetch.append(ticker)
 
@@ -329,8 +330,8 @@ class DataCache:
         try:
             new_data = self._download_with_retry(
                 tickers_to_fetch,
-                start=start_date,
-                end=end_date + timedelta(days=1),
+                start=start,
+                end=end + timedelta(days=1),
             )
 
             if "Close" in new_data.columns:
@@ -343,7 +344,7 @@ class DataCache:
             self.save_data(new_data, tickers_to_fetch)
 
             # Retrieve complete dataset from cache
-            return self.get_data(tickers, start_date, end_date)
+            return self.get_data(tickers, start, end)
 
         except Exception as e:
             logger.error("Error fetching data: %s", e)
@@ -418,7 +419,7 @@ class DataCache:
         Returns:
             Dictionary with validation results
         """
-        result = {"ticker": ticker, "valid": True, "issues": []}
+        result: dict[str, Any] = {"ticker": ticker, "valid": True, "issues": []}
 
         try:
             # Check for gaps in data

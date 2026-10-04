@@ -15,7 +15,7 @@ from ..strategies.momentum import MomentumAnalyzer
 from ..strategies.vaa import VAAStrategy
 
 
-def print_header():
+def print_header() -> None:
     """Print application header."""
     print("\n" + "=" * 60)
     print("🚀 최적 포트폴리오 관리 시스템")
@@ -23,7 +23,7 @@ def print_header():
     print("고급 OU 예측 기반 VAA 전략\n")
 
 
-def print_menu():
+def print_menu() -> str:
     """Print main menu."""
     print("\n원하는 메뉴를 선택하세요:")
     print("1. 📊 VAA 분석 실행")
@@ -35,7 +35,7 @@ def print_menu():
     return input("\n번호 입력 (1-6): ").strip()
 
 
-def run_vaa_analysis():
+def run_vaa_analysis() -> str | None:
     """Run VAA analysis interactively."""
     print("\n📊 VAA ETF 선택 분석")
     print("-" * 40)
@@ -75,7 +75,7 @@ def run_vaa_analysis():
         return None
 
 
-def run_portfolio_management(selected_etf: str | None = None):
+def run_portfolio_management(selected_etf: str | None = None) -> None:
     """Run portfolio management interactively."""
     print("\n💼 포트폴리오 관리")
     print("-" * 40)
@@ -179,7 +179,7 @@ def run_portfolio_management(selected_etf: str | None = None):
     print(f"💵 남은 현금: ${recommendations['remaining_cash']:,.2f}")
 
 
-def run_backtest():
+def run_backtest() -> None:
     """Run strategy backtest."""
     print("\n📈 전략 백테스트")
     print("-" * 40)
@@ -202,7 +202,7 @@ def run_backtest():
         engine.plot_results(results)
 
 
-def plot_momentum_history():
+def plot_momentum_history() -> None:
     """Plot momentum history."""
     print("\n📉 모멘텀 히스토리 그래프")
     print("-" * 40)
@@ -266,7 +266,7 @@ def plot_momentum_history():
     plt.show()
 
 
-def cache_management():
+def cache_management() -> None:
     """Cache management menu."""
     print("\n💾 캐시 관리")
     print("-" * 40)
@@ -310,7 +310,7 @@ def cache_management():
         cache.optimize()
 
 
-def main():
+def main() -> None:
     """Main CLI entry point."""
     print_header()
 
