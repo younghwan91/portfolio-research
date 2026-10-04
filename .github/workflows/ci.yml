@@ -77,17 +77,17 @@ jobs:
       - name: Install dev dependencies
         run: uv sync --extra dev
 
-      # 팩터 엔진은 엄격하게 막는다. CLAUDE.md 의 "신규 함수에는 타입 힌트가
-      # 필수" 규칙이 실제로 강제되는 지점이다 (현재 이 트리는 mypy 무결점).
-      - name: mypy (factor engine — 실패하면 CI 실패)
-        run: uv run mypy src/opt_portfolio/factor/
+      # 트리 전체를 엄격하게 막는다. CLAUDE.md 의 "신규 함수에는 타입 힌트가
+      # 필수" 규칙이 실제로 강제되는 지점이다. 구 VAA 코드의 63건은 2026-10-05 에
+      # 전부 고쳤다 — 그 전까지는 factor/ 만 막고 나머지는 보고용이었는데,
+      # 보고용 단계는 아무도 읽지 않아 그 63건이 넉 달을 그대로 살았다.
+      - name: mypy (src + scripts — 실패하면 CI 실패)
+        run: uv run mypy src/ scripts/
 
-      # 구 VAA 코드는 타입 힌트 없이 쓰였다(63건). 한 번에 고치는 것은 이
-      # 작업의 범위가 아니라 보고만 한다 — 전체를 continue-on-error 로 덮으면
-      # 신규 코드의 회귀까지 같이 숨는다.
-      - name: mypy (legacy — 보고용)
-        run: uv run mypy src/
-        continue-on-error: true
+      # run.py 는 `src.opt_portfolio` 경로로 import 해서 src/ 와 함께 검사하면
+      # 같은 모듈이 두 이름으로 잡힌다. 따로 돈다.
+      - name: mypy (run.py)
+        run: uv run mypy run.py
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -95,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v7
