@@ -4,8 +4,11 @@ Unit tests for analysis/metrics.py — shared financial metrics functions.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from opt_portfolio.analysis.metrics import (
     calculate_cagr,
@@ -45,19 +48,34 @@ class TestCalculateCagr:
 
 class TestCalculateSharpeRatio:
     def test_positive_returns_positive_sharpe(self) -> None:
-        returns = pd.Series([0.02] * 12)
+        returns = pd.Series([0.02, 0.03, 0.01, 0.04, 0.02, 0.03] * 2)
         result = calculate_sharpe_ratio(returns)
+        assert np.isfinite(result)
         assert result > 0
 
     def test_negative_returns_negative_sharpe(self) -> None:
-        returns = pd.Series([-0.02] * 12)
+        returns = pd.Series([-0.02, -0.03, -0.01, -0.04, -0.02, -0.03] * 2)
         result = calculate_sharpe_ratio(returns)
+        assert np.isfinite(result)
         assert result < 0
 
     def test_zero_std_returns_zero(self) -> None:
         returns = pd.Series([0.0] * 12)
         result = calculate_sharpe_ratio(returns)
         assert result == 0.0
+
+    @pytest.mark.parametrize("level", [0.02, -0.02, 0.005])
+    def test_constant_nonzero_returns_zero_not_inf(self, level: float) -> None:
+        # 상수 수익률은 변동성이 0 이라 Sharpe 가 정의되지 않는다. 예전 구현은
+        # `returns.std()` 는 부동소수 오차로 0 이 아닌데 `excess.std()` 는 정확히
+        # 0 이 되어 inf 를 돌려줬다 (RuntimeWarning: divide by zero).
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            result = calculate_sharpe_ratio(pd.Series([level] * 12))
+        assert result == 0.0
+
+    def test_single_observation_returns_zero(self) -> None:
+        assert calculate_sharpe_ratio(pd.Series([0.05])) == 0.0
 
     def test_risk_free_subtracted(self) -> None:
         rng = np.random.default_rng(99)
