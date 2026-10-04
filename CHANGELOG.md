@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **상수 수익률에서 `calculate_sharpe_ratio` 가 inf 를 돌려줬다.** `returns.std() == 0`
+  검사는 부동소수 오차(1e-18)로 통과하고 `excess.std()` 는 정확히 0 이 되어
+  mean/0 이 됐다. 매 테스트 실행마다 `RuntimeWarning: divide by zero` 가 남았고,
+  기존 테스트 두 개는 그 상수 시계열로 inf > 0 을 "양의 Sharpe" 로 통과시키고
+  있었다. 이 함수는 factor/·taa/ 와 공유한다.
+- `VAAStrategy(use_forecasting=False)` 가 예측 추천 경로에 들어가면 `None.forecast`
+  로 죽을 수 있었다 — None 검사를 넣는다.
+- `DataCache.get_missing_date_ranges` / `get_incremental_data` 가 `str` 인자를
+  `pd.to_datetime` 결과로 덮어써서 타입이 `str | datetime` 으로 남았다.
+- `scripts/update_readme_performance.py` 표 각주의 "보유 종목은 공개하지 않는다 —
+  초소형주" 문구. 운용 후보가 대형주 E안으로 바뀌고 파라미터를 전부 공개한
+  뒤에도 남아 있어, 재생성하면 사실과 다른 문구가 README 에 되살아날 상태였다.
+- CLAUDE.md 의 "구독 종료·ingest 실패" 서술. README 는 08-26 에 정정했는데 이
+  파일은 넉 달간 그대로였다. 스토어는 `quant-airflow` 가 계속 재구축한다
+  (2026-10-05 실측 `prices` 최신일 2026-09-10).
+
+### Changed
+
+- **mypy 가 트리 전체를 막는다.** 구 VAA·분석·코어 코드의 63건을 전부 해소하고
+  CI 의 "legacy — 보고용"(continue-on-error) 단계를 없앴다. `make typecheck` =
+  `mypy src/ scripts/` + `mypy run.py`.
+- 구 VAA 서브시스템에 단위 테스트 139개 추가 — `strategies/` 커버리지 11~27% →
+  98~100%, 전체 58% → 65%. 네트워크 없이 돈다.
+- 클래스 범위 pytest 픽스처를 classmethod 로 — pytest 10 에서 제거되는 형태였다.
+- CI 매트릭스에 Python 3.13 추가. pre-commit ruff 핀 v0.16.2 → v0.16.9.
+
+### Known issues (미수정, 테스트는 현 동작을 고정)
+
+- `ou_process.py` 두 시뮬레이션의 `range(1, forecast_days)` 는 21일 지평을
+  20걸음만 걷고, `future_dates` 는 현재값 열을 첫 미래 영업일로 라벨한다.
+- `OUForecaster.calibrate` 의 μ 가 0.999 로 클립된 slope 로 계산되어 추세
+  시계열에서 회귀 목표가 비현실적으로 커진다.
+
 ## [3.1.0] - 2026-08-16
 
 ### Added
