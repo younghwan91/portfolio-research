@@ -3,12 +3,17 @@ updates:
   # 이 저장소의 의존성 원천은 pyproject.toml + uv.lock 하나다.
   # requirements.txt 는 CI·Makefile 어디서도 쓰이지 않으면서 dependabot 만
   # 물고 있었고, 그래서 이미 제거한 streamlit 버전 상향 PR 이 계속 올라왔다.
+  #
+  # 2026-10-08: 매주·패키지별 PR 이 석 달 동안 42개 — 메일 소음이었다. 매달, 생태계마다
+  # 묶음 PR 하나로 받는다. 묶음 PR 이 minor/patch 만이면 dependabot-auto-merge 가 머지한다.
   - package-ecosystem: "uv"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    groups:
+      python-deps:
+        patterns: ["*"]
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
       - "python"
@@ -16,9 +21,11 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    groups:
+      actions:
+        patterns: ["*"]
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
       - "github-actions"
