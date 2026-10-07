@@ -236,14 +236,19 @@ class TestUniverse:
 
 
 class TestPipelineE2E:
+    # pytest 10 은 클래스 범위 픽스처를 인스턴스 메서드로 정의하는 것을 제거한다
+    # (PytestRemovedIn10Warning). 픽스처는 클래스당 한 번 돌지만 테스트마다 새
+    # 인스턴스가 생기므로 self 에 쓴 속성은 테스트에 보이지 않는다.
     @pytest.fixture(scope="class")
-    def pipeline(self, synth_ctx) -> FactorPipeline:
+    @classmethod
+    def pipeline(cls, synth_ctx) -> FactorPipeline:
         import opt_portfolio.factor.library  # noqa: F401
 
         return FactorPipeline(synth_ctx)
 
     @pytest.fixture(scope="class")
-    def strategy(self) -> StrategyConfig:
+    @classmethod
+    def strategy(cls) -> StrategyConfig:
         return StrategyConfig(
             factors=("PER_TTM", "GP_A", "MOM_12_1"),
             universe=UniverseConfig(min_adv_usd=0.0, exclude_distressed=False),

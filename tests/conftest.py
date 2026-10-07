@@ -51,3 +51,42 @@ def flat_prices() -> pd.DataFrame:
     """Flat price series — should yield 0% CAGR and 0 max drawdown."""
     dates = pd.date_range("2020-01-31", periods=24, freq="ME")
     return pd.DataFrame({"ASSET": np.ones(24) * 100.0}, index=dates)
+
+
+class FakeCache:
+    """Stand-in for ``DataCache`` — serves a fixed daily price frame, no I/O."""
+
+    def __init__(self, prices: pd.DataFrame) -> None:
+        self.prices = prices
+        self.calls: list[tuple[list[str], pd.Timestamp, pd.Timestamp]] = []
+
+    def get_incremental_data(
+        self, tickers: list[str], start: pd.Timestamp, end: pd.Timestamp
+    ) -> pd.DataFrame:
+        self.calls.append((list(tickers), pd.Timestamp(start), pd.Timestamp(end)))
+        cols = [t for t in tickers if t in self.prices.columns]
+        window = self.prices.loc[pd.Timestamp(start) : pd.Timestamp(end), cols]
+        return window.copy()
+
+
+def make_daily_prices(
+    daily_growth: dict[str, float], end: str = "2023-12-29", periods: int = 600
+) -> pd.DataFrame:
+    """Deterministic constant-growth daily prices.
+
+    ``daily_growth`` maps ticker -> per-business-day growth factor minus one
+    (0.001 means +0.1 %/day, -0.001 a steady decline).  A negative growth
+    rate gives negative momentum on every horizon, which is what the VAA
+    defensive-switch tests need.
+    """
+    dates = pd.bdate_range(end=end, periods=periods)
+    data = {
+        ticker: 100.0 * np.cumprod(np.full(periods, 1.0 + g)) for ticker, g in daily_growth.items()
+    }
+    return pd.DataFrame(data, index=dates)
+
+
+@pytest.fixture()
+def daily_growth_prices() -> pd.DataFrame:
+    """600 business days ending 2023-12-29: two risers, one faller."""
+    return make_daily_prices({"SPY": 0.001, "EFA": 0.0005, "EEM": -0.001})

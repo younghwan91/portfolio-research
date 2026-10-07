@@ -89,7 +89,7 @@ class RiskAnalyzer:
         Returns:
             Volatility value
         """
-        vol = returns.std()
+        vol = float(returns.std())
         if annualize:
             vol *= np.sqrt(periods_per_year)
         return vol
@@ -130,7 +130,7 @@ class RiskAnalyzer:
         if annual_vol == 0:
             return 0.0
 
-        return (annual_return - risk_free_rate) / annual_vol
+        return float((annual_return - risk_free_rate) / annual_vol)
 
     def calculate_sortino_ratio(
         self, returns: pd.Series, risk_free_rate: float | None = None, target_return: float = 0.0
@@ -166,7 +166,7 @@ class RiskAnalyzer:
         if downside_std == 0:
             return float("inf")
 
-        return (annual_return - risk_free_rate) / downside_std
+        return float((annual_return - risk_free_rate) / downside_std)
 
     def calculate_max_drawdown(
         self, prices: pd.Series | np.ndarray
@@ -226,7 +226,7 @@ class RiskAnalyzer:
         if max_dd == 0:
             return float("inf")
 
-        return annual_return / max_dd
+        return float(annual_return / max_dd)
 
     def calculate_var(
         self, returns: pd.Series, confidence: float = 0.95, method: str = "historical"
@@ -257,7 +257,7 @@ class RiskAnalyzer:
             std = returns.std()
             var = stats.norm.ppf(1 - confidence, mean, std)
 
-        return abs(var)
+        return float(abs(var))
 
     def calculate_cvar(self, returns: pd.Series, confidence: float = 0.95) -> float:
         """
@@ -284,7 +284,7 @@ class RiskAnalyzer:
         if len(tail_returns) == 0:
             return var
 
-        return abs(tail_returns.mean())
+        return float(abs(tail_returns.mean()))
 
     def calculate_beta(self, returns: pd.Series, benchmark_returns: pd.Series) -> float:
         """
@@ -314,7 +314,7 @@ class RiskAnalyzer:
         if var == 0:
             return 1.0
 
-        return cov / var
+        return float(cov / var)
 
     def calculate_all_metrics(
         self, returns: pd.Series, prices: pd.Series, benchmark_returns: pd.Series | None = None

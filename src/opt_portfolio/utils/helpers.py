@@ -67,7 +67,7 @@ def annualize_return(total_return: float, years: float) -> float:
     """
     if years <= 0:
         return 0.0
-    return (1 + total_return) ** (1 / years) - 1
+    return float((1 + total_return) ** (1 / years) - 1)
 
 
 def calculate_portfolio_value(holdings: dict, prices: dict) -> float:
@@ -89,7 +89,9 @@ def calculate_portfolio_value(holdings: dict, prices: dict) -> float:
 
 
 def get_color_for_value(
-    value: float, thresholds: tuple = (0, 0), colors: tuple = ("green", "gray", "red")
+    value: float,
+    thresholds: tuple[float, float] = (0, 0),
+    colors: tuple[str, str, str] = ("green", "gray", "red"),
 ) -> str:
     """
     Get color based on value thresholds.

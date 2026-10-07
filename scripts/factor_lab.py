@@ -26,7 +26,8 @@ warnings.filterwarnings("ignore")
 
 import opt_portfolio.factor.library  # noqa: F401,E402  (레지스트리 등록)
 from opt_portfolio.factor.data.store import PITStore  # noqa: E402
-from opt_portfolio.factor.dsl.registry import REGISTRY  # noqa: E402
+from opt_portfolio.factor.dsl.context import PanelContext  # noqa: E402
+from opt_portfolio.factor.dsl.registry import REGISTRY, FactorSpec  # noqa: E402
 from opt_portfolio.factor.research.ic import (  # noqa: E402
     forward_returns,
     rank_ic,
@@ -37,7 +38,13 @@ from opt_portfolio.factor.research.quantiles import analyze_quantiles  # noqa: E
 PROMOTION = {"spread_t": 2.0, "monotonicity": 0.6, "turnover": 0.15}
 
 
-def evaluate(ctx, spec, dates: pd.DatetimeIndex, fwd: pd.DataFrame, n_quantiles: int) -> dict:
+def evaluate(
+    ctx: PanelContext,
+    spec: FactorSpec,
+    dates: pd.DatetimeIndex,
+    fwd: pd.DataFrame,
+    n_quantiles: int,
+) -> dict:
     """한 팩터의 IC · 10분할 · 회전율."""
     panel = ctx.eval_daily(spec.scoring_expr()).reindex(dates, method="ffill")
     ic = summarize_ic(rank_ic(panel, fwd), horizon=21)

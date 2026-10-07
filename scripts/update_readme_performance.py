@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import re
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -73,7 +74,7 @@ def benchmark_returns(store_path: str, index: pd.DatetimeIndex, ticker: str) -> 
 
 #: 언어별 표 문구. 한국어 README 에 영문 표가 들어가 있으면 자동 생성이라는
 #: 사실만 드러나고 읽는 사람에게는 불친절하다.
-STRINGS = {
+STRINGS: dict[str, dict[str, Any]] = {
     "en": {
         "metric": "Metric",
         "strategy": "Strategy",
@@ -81,10 +82,11 @@ STRINGS = {
         "period": "*{label} · walk-forward out-of-sample · {period} ({years:.1f}y)*",
         "rows": ["CAGR", "Max drawdown", "Volatility", "Sharpe", "Calmar"],
         "dsr": "**Deflated Sharpe** ({trials} trials)",
-        "footer": (
-            "Cumulative {mult:.1f}× over the validation window. Holdings are not "
-            "published — the universe is micro-cap and crowding would move the entry price."
-        ),
+        # 한때 "보유 종목은 공개하지 않는다 — 초소형주라 몰리면 체결가가 밀린다"
+        # 가 붙어 있었다. 운용 후보가 대형주 E안으로 바뀌고 파라미터를 전부
+        # 공개한 뒤(configs/README.md)에도 이 문구가 남아, 다음 재생성 때 사실과
+        # 다른 각주를 README 에 다시 심을 상태였다.
+        "footer": "Cumulative {mult:.1f}× over the validation window.",
     },
     "ko": {
         "metric": "지표",
@@ -93,10 +95,7 @@ STRINGS = {
         "period": "*{label} · walk-forward 검증 구간 · {period} ({years:.1f}년)*",
         "rows": ["연평균 수익률", "최대낙폭", "변동성", "Sharpe", "Calmar"],
         "dsr": "**Deflated Sharpe** (시도 {trials}회)",
-        "footer": (
-            "검증 구간 누적 {mult:.1f}배. **보유 종목은 공개하지 않는다** — 초소형주라 "
-            "공개 추천이 몰리면 자신의 체결가가 나빠진다."
-        ),
+        "footer": "검증 구간 누적 {mult:.1f}배.",
     },
 }
 

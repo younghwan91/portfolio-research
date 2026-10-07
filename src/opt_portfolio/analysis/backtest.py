@@ -12,6 +12,7 @@ Now supports dynamic VAA selection and portfolio weight optimization.
 """
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,6 +25,9 @@ from ..strategies.ou_process import OUForecaster
 from .data_fetcher import DataFetcher
 from .metrics import calculate_cagr
 from .risk import RiskAnalyzer
+
+if TYPE_CHECKING:
+    from .optimizer import OptimizationResult
 
 #: 이 모듈의 백테스트는 월 1회 리밸런싱이므로 수익률 시계열이 월별이다.
 PERIODS_PER_YEAR_MONTHLY = 12
@@ -289,7 +293,7 @@ class BacktestEngine:
 
     def run_optimized_backtest(
         self, years: int = BACKTEST.DEFAULT_YEARS
-    ) -> tuple[BacktestResult, "OptimizationResult"]:  # noqa: F821
+    ) -> tuple[BacktestResult, "OptimizationResult"]:
         """
         Run backtest and optimize portfolio weights for best Sharpe Ratio.
 
@@ -390,10 +394,10 @@ class BacktestEngine:
         results = {}
         capitals = dict.fromkeys(strategies, self.initial_capital)
         equity_curves = {s: [self.initial_capital] for s in strategies}
-        monthly_returns = {s: [] for s in strategies}
-        transactions_log = {s: [] for s in strategies}
+        monthly_returns: dict[str, list[float]] = {s: [] for s in strategies}
+        transactions_log: dict[str, list[dict[str, Any]]] = {s: [] for s in strategies}
         defensive_counts = dict.fromkeys(strategies, 0)
-        vaa_selections_log = {s: [] for s in strategies}
+        vaa_selections_log: dict[str, list[str]] = {s: [] for s in strategies}
 
         dates_recorded = []
 
@@ -525,7 +529,7 @@ class BacktestEngine:
         results: dict[str, BacktestResult],
         benchmark: pd.Series | None = None,
         figsize: tuple[int, int] = (14, 8),
-    ):
+    ) -> None:
         """
         Plot backtest results.
 

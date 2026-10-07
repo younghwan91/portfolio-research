@@ -48,8 +48,8 @@ Sharadar TICKERS 는 Morningstar 계열 11개 섹터를 쓴다. 요청된 26개 
 `(섹터, industry 부분일치 키워드)` 쌍으로 매핑해 한국식 사고를 그대로 쓸 수 있게 했다.
 
 ```python
-UniverseConfig(wics_industries=("반도체", "소프트웨어"))   # 한국식
-UniverseConfig(sectors=("Technology", "Healthcare"))      # 미국 원본 (더 정확)
+UniverseConfig(wics_industries=("반도체", "소프트웨어"))  # 한국식
+UniverseConfig(sectors=("Technology", "Healthcare"))  # 미국 원본 (더 정확)
 ```
 둘은 동시 지정 불가 (`__post_init__` 에서 거부).
 

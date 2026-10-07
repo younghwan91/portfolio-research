@@ -31,7 +31,7 @@ def calculate_cagr(initial_value: float, final_value: float, years: float) -> fl
     """
     if years <= 0 or initial_value <= 0:
         return 0.0
-    return (final_value / initial_value) ** (1.0 / years) - 1
+    return float((final_value / initial_value) ** (1.0 / years) - 1)
 
 
 def calculate_sharpe_ratio(
@@ -53,11 +53,17 @@ def calculate_sharpe_ratio(
     Returns:
         Sharpe ratio (annualised)
     """
-    if returns.empty or returns.std() == 0:
+    # 상수 수익률(관측 1개 포함)은 변동성이 0 이라 Sharpe 가 정의되지 않는다.
+    # `returns.std() == 0` 만 보면 부동소수 오차로 1e-18 이 나와 통과하고, 그 뒤
+    # `excess.std()` 는 정확히 0 이 되어 inf 를 돌려주던 결함이 있었다.
+    if returns.empty or returns.nunique(dropna=True) <= 1:
         return 0.0
     periodic_rf = risk_free_rate / periods_per_year
     excess = returns - periodic_rf
-    return float(excess.mean() / excess.std() * np.sqrt(periods_per_year))
+    std = float(excess.std())
+    if not np.isfinite(std) or std == 0.0:
+        return 0.0
+    return float(excess.mean() / std * np.sqrt(periods_per_year))
 
 
 def calculate_max_drawdown(equity_curve: pd.Series) -> float:

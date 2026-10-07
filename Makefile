@@ -29,7 +29,8 @@ format:
 	uv run ruff format src/ tests/ scripts/
 
 typecheck:
-	uv run mypy src/
+	uv run mypy src/ scripts/
+	uv run mypy run.py
 
 run:
 	python3 run.py

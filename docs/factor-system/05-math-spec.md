@@ -59,21 +59,21 @@ IC 는 좋은데 백테스트가 안 되는(또는 그 반대) 원인 불명의 
 from opt_portfolio.factor.optimize.walkforward import run_walk_forward
 
 result = run_walk_forward(
-    evaluate,            # (params, start, end) → 일별 수익률 (백테스트 클로저)
-    space={              # 탐색 공간 — 이것이 곧 전략의 자유도
-        "n_stocks":        ("int",   10, 50),
-        "weighting":       ("cat",   ["equal", "hrp", "black_litterman"]),
+    evaluate,  # (params, start, end) → 일별 수익률 (백테스트 클로저)
+    space={  # 탐색 공간 — 이것이 곧 전략의 자유도
+        "n_stocks": ("int", 10, 50),
+        "weighting": ("cat", ["equal", "hrp", "black_litterman"]),
         "view_confidence": ("float", 0.05, 2.0),
-        "rebalance":       ("cat",   ["ME", "QE"]),
+        "rebalance": ("cat", ["ME", "QE"]),
     },
     calendar=trading_days,
-    method="bayesian",         # GP-EI: 적은 시도 = 낮은 SR₀ = 유리한 DSR
+    method="bayesian",  # GP-EI: 적은 시도 = 낮은 SR₀ = 유리한 DSR
     n_trials_per_fold=24,
-    embargo_days=21,           # ≥ 보유기간
+    embargo_days=21,  # ≥ 보유기간
 )
 
-result.oos_returns        # 공식 성과 (train 에 쓰인 적 없는 수익률만)
-result.sharpe()           # OOS Sharpe
+result.oos_returns  # 공식 성과 (train 에 쓰인 적 없는 수익률만)
+result.sharpe()  # OOS Sharpe
 result.deflated_sharpe()  # 전 시도 횟수로 정산한 유의확률 — 0.95 이상만 신뢰
 result.param_stability()  # 폴드별 선택 파라미터 — 널뛰면 노이즈 피팅 경고
 ```

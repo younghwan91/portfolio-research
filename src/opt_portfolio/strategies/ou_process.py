@@ -112,7 +112,7 @@ class OUForecaster:
             Expected value at forecast horizon
         """
         if len(series) < MOMENTUM.MIN_DATA_POINTS:
-            return series.iloc[-1] if len(series) > 0 else 0
+            return float(series.iloc[-1]) if len(series) > 0 else 0.0
 
         params = self.calibrate(series)
         current_val = series.iloc[-1]
@@ -121,7 +121,7 @@ class OUForecaster:
         T = months * MOMENTUM.TRADING_DAYS_PER_MONTH
 
         # Analytical solution: E[X_{t+T}] = mu + (X_t - mu) * exp(-theta * T)
-        return params["mu"] + (current_val - params["mu"]) * np.exp(-params["theta"] * T)
+        return float(params["mu"] + (current_val - params["mu"]) * np.exp(-params["theta"] * T))
 
     def forecast_delta(self, series: pd.Series, months: int = 1) -> float:
         """
@@ -163,7 +163,7 @@ class OUForecaster:
             Tuple of (mean, std, optional paths)
         """
         if len(series) < MOMENTUM.MIN_DATA_POINTS:
-            current = series.iloc[-1] if len(series) > 0 else 0
+            current = float(series.iloc[-1]) if len(series) > 0 else 0.0
             return current, 0.0, None
 
         params = self.calibrate(series)
@@ -187,8 +187,8 @@ class OUForecaster:
             sim_paths[:, t] = sim_paths[:, t - 1] + dx
 
         final_values = sim_paths[:, -1]
-        mean_forecast = np.mean(final_values)
-        std_forecast = np.std(final_values)
+        mean_forecast = float(np.mean(final_values))
+        std_forecast = float(np.std(final_values))
 
         if return_paths:
             return mean_forecast, std_forecast, sim_paths
@@ -224,8 +224,8 @@ class OUForecaster:
         forecast_days = months * MOMENTUM.TRADING_DAYS_PER_MONTH
         dt = 1.0
 
-        final_scores = {ticker: [] for ticker in momentum_df.columns}
-        mean_paths = {}
+        final_scores: dict[str, np.ndarray] = {}
+        mean_paths: dict[str, np.ndarray] = {}
 
         # Create future dates
         last_date = momentum_df.index[-1]
