@@ -15,7 +15,7 @@ CBOP = factor(
     (F.gp - _delta(F.receivables) - _delta(F.inventory) + _delta(F.liabilitiesc)) / F.assets,
     category="quality",
     direction=1,
-    neutralize=("sector",),   # cross-sectional sector neutralisation
+    neutralize=("sector",),  # cross-sectional sector neutralisation
 )
 ```
 

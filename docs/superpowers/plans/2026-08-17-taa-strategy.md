@@ -76,21 +76,27 @@ def _make_zip(tmp_path: Path, rows: list[str]) -> Path:
 class TestLoadPrices:
     def test_uses_closeadj_not_close(self, tmp_path: Path) -> None:
         """배당조정가를 써야 한다 — close 를 쓰면 채권 ETF 수익이 뒤집힌다."""
-        zp = _make_zip(tmp_path, [
-            "TLT,2010-01-04,0,0,0,89.81,100,55.163,89.81,2026-08-14",
-            "TLT,2026-08-14,0,0,0,82.04,100,82.04,82.04,2026-08-14",
-        ])
+        zp = _make_zip(
+            tmp_path,
+            [
+                "TLT,2010-01-04,0,0,0,89.81,100,55.163,89.81,2026-08-14",
+                "TLT,2026-08-14,0,0,0,82.04,100,82.04,82.04,2026-08-14",
+            ],
+        )
         px = load_prices(["TLT"], zip_path=zp)
 
         assert px.loc[pd.Timestamp("2010-01-04"), "TLT"] == pytest.approx(55.163)
         assert px.loc[pd.Timestamp("2026-08-14"), "TLT"] == pytest.approx(82.04)
 
     def test_filters_to_requested_tickers(self, tmp_path: Path) -> None:
-        zp = _make_zip(tmp_path, [
-            "TLT,2010-01-04,0,0,0,1,100,55.163,1,2026-08-14",
-            "SPY,2010-01-04,0,0,0,1,100,90.0,1,2026-08-14",
-            "QQQ,2010-01-04,0,0,0,1,100,40.0,1,2026-08-14",
-        ])
+        zp = _make_zip(
+            tmp_path,
+            [
+                "TLT,2010-01-04,0,0,0,1,100,55.163,1,2026-08-14",
+                "SPY,2010-01-04,0,0,0,1,100,90.0,1,2026-08-14",
+                "QQQ,2010-01-04,0,0,0,1,100,40.0,1,2026-08-14",
+            ],
+        )
         px = load_prices(["TLT", "SPY"], zip_path=zp)
 
         assert sorted(px.columns) == ["SPY", "TLT"]
@@ -103,10 +109,13 @@ class TestLoadPrices:
             load_prices(["SPY", "NOPE"], zip_path=zp)
 
     def test_index_is_sorted_datetime(self, tmp_path: Path) -> None:
-        zp = _make_zip(tmp_path, [
-            "SPY,2010-01-05,0,0,0,1,100,91.0,1,2026-08-14",
-            "SPY,2010-01-04,0,0,0,1,100,90.0,1,2026-08-14",
-        ])
+        zp = _make_zip(
+            tmp_path,
+            [
+                "SPY,2010-01-05,0,0,0,1,100,91.0,1,2026-08-14",
+                "SPY,2010-01-04,0,0,0,1,100,90.0,1,2026-08-14",
+            ],
+        )
         px = load_prices(["SPY"], zip_path=zp)
 
         assert isinstance(px.index, pd.DatetimeIndex)
@@ -473,9 +482,14 @@ class TestSelectWeights:
 
     def test_multiple_holdings_are_equal_weighted(self) -> None:
         spec = StrategySpec(
-            name="t2", canary=("SPY",), offensive=("QQQ", "EEM", "IEF"),
-            defensive=("BIL",), top_n_offensive=2, top_n_defensive=1,
-            selection="sma13", cash_ticker="BIL",
+            name="t2",
+            canary=("SPY",),
+            offensive=("QQQ", "EEM", "IEF"),
+            defensive=("BIL",),
+            top_n_offensive=2,
+            top_n_defensive=1,
+            selection="sma13",
+            cash_ticker="BIL",
         )
         mom, sel = _frames(
             {"SPY": 0.5, "QQQ": 0.0, "EEM": 0.0, "IEF": 0.0, "BIL": 0.0},
@@ -488,9 +502,15 @@ class TestSelectWeights:
     def test_static_spec_ignores_signals(self) -> None:
         """60/40 기준선 — 아무 판단도 하지 않는다."""
         spec = StrategySpec(
-            name="60/40", canary=(), offensive=(), defensive=(),
-            top_n_offensive=0, top_n_defensive=0, selection="sma13",
-            cash_ticker=None, static_weights={"SPY": 0.6, "IEF": 0.4},
+            name="60/40",
+            canary=(),
+            offensive=(),
+            defensive=(),
+            top_n_offensive=0,
+            top_n_defensive=0,
+            selection="sma13",
+            cash_ticker=None,
+            static_weights={"SPY": 0.6, "IEF": 0.4},
         )
         mom, sel = _frames({"SPY": -9.0}, {"SPY": 0.1})
 
@@ -499,17 +519,22 @@ class TestSelectWeights:
     def test_uses_13612w_when_selection_is_13612w(self) -> None:
         """VAA 는 선택도 13612W 로 한다 — BAA 와 갈리는 지점."""
         spec = StrategySpec(
-            name="vaa", canary=("SPY",), offensive=("QQQ", "EEM"),
-            defensive=("IEF",), top_n_offensive=1, top_n_defensive=1,
-            selection="13612w", cash_ticker=None,
+            name="vaa",
+            canary=("SPY",),
+            offensive=("QQQ", "EEM"),
+            defensive=("IEF",),
+            top_n_offensive=1,
+            top_n_defensive=1,
+            selection="13612w",
+            cash_ticker=None,
         )
         mom, sel = _frames(
             {"SPY": 0.5, "QQQ": 0.1, "EEM": 0.9, "IEF": 0.0},
-            {"QQQ": 9.9, "EEM": 0.1, "IEF": 1.0},   # sma 는 QQQ 가 높지만
+            {"QQQ": 9.9, "EEM": 0.1, "IEF": 1.0},  # sma 는 QQQ 가 높지만
         )
         w = select_weights(spec, mom, sel, D)
 
-        assert w == {"EEM": 1.0}   # 13612W 기준이라 EEM
+        assert w == {"EEM": 1.0}  # 13612W 기준이라 EEM
 ```
 
 - [ ] **Step 2: 실패를 확인한다**
@@ -658,8 +683,13 @@ from opt_portfolio.taa.backtest import run_backtest
 from opt_portfolio.taa.strategy import StrategySpec
 
 STATIC = StrategySpec(
-    name="allspy", canary=(), offensive=(), defensive=(),
-    top_n_offensive=0, top_n_defensive=0, static_weights={"SPY": 1.0},
+    name="allspy",
+    canary=(),
+    offensive=(),
+    defensive=(),
+    top_n_offensive=0,
+    top_n_defensive=0,
+    static_weights={"SPY": 1.0},
 )
 
 
@@ -790,7 +820,9 @@ def run_backtest(
         if not np.isfinite(gross):
             continue  # 다음 달 가격이 없는 마지막 시점
 
-        turnover = sum(abs(weights.get(t, 0.0) - prev.get(t, 0.0)) for t in set(weights) | set(prev))
+        turnover = sum(
+            abs(weights.get(t, 0.0) - prev.get(t, 0.0)) for t in set(weights) | set(prev)
+        )
         cost = turnover * cost_bps / 10_000.0
 
         dates.append(date)
@@ -848,8 +880,15 @@ from __future__ import annotations
 from opt_portfolio.taa.registry import MA_OVERLAY, REGISTERED, TRANCHE
 
 EXPECTED = {
-    "spy", "static_60_40", "vaa_g4", "baa_agg", "baa_bal",
-    "baa_agg_ma", "baa_bal_ma", "baa_bal_tranche", "baa_bal_ma_tranche",
+    "spy",
+    "static_60_40",
+    "vaa_g4",
+    "baa_agg",
+    "baa_bal",
+    "baa_agg_ma",
+    "baa_bal_ma",
+    "baa_bal_tranche",
+    "baa_bal_ma_tranche",
 }
 
 
@@ -924,21 +963,42 @@ from .strategy import StrategySpec
 _BAA_CANARY = ("SPY", "EFA", "EEM", "AGG")
 _BAA_DEFENSIVE = ("TIP", "DBC", "BIL", "IEF", "TLT", "LQD", "AGG")
 _BAA_BAL_OFFENSIVE = (
-    "SPY", "QQQ", "IWM", "VGK", "EWJ", "EEM", "VNQ", "DBC", "GLD", "TLT", "HYG", "LQD",
+    "SPY",
+    "QQQ",
+    "IWM",
+    "VGK",
+    "EWJ",
+    "EEM",
+    "VNQ",
+    "DBC",
+    "GLD",
+    "TLT",
+    "HYG",
+    "LQD",
 )
 
 
 def _spy() -> StrategySpec:
     return StrategySpec(
-        name="spy", canary=(), offensive=(), defensive=(),
-        top_n_offensive=0, top_n_defensive=0, static_weights={"SPY": 1.0},
+        name="spy",
+        canary=(),
+        offensive=(),
+        defensive=(),
+        top_n_offensive=0,
+        top_n_defensive=0,
+        static_weights={"SPY": 1.0},
     )
 
 
 def _static_60_40() -> StrategySpec:
     return StrategySpec(
-        name="static_60_40", canary=(), offensive=(), defensive=(),
-        top_n_offensive=0, top_n_defensive=0, static_weights={"SPY": 0.6, "IEF": 0.4},
+        name="static_60_40",
+        canary=(),
+        offensive=(),
+        defensive=(),
+        top_n_offensive=0,
+        top_n_defensive=0,
+        static_weights={"SPY": 0.6, "IEF": 0.4},
     )
 
 
@@ -949,8 +1009,10 @@ def _vaa_g4() -> StrategySpec:
         canary=("SPY", "EFA", "EEM", "AGG"),
         offensive=("SPY", "EFA", "EEM", "AGG"),
         defensive=("LQD", "IEF", "SHY"),
-        top_n_offensive=1, top_n_defensive=1,
-        selection="13612w", cash_ticker=None,
+        top_n_offensive=1,
+        top_n_defensive=1,
+        selection="13612w",
+        cash_ticker=None,
     )
 
 
@@ -960,8 +1022,10 @@ def _baa(name: str, offensive: tuple[str, ...], top_off: int, top_def: int) -> S
         canary=_BAA_CANARY,
         offensive=offensive,
         defensive=_BAA_DEFENSIVE,
-        top_n_offensive=top_off, top_n_defensive=top_def,
-        selection="sma13", cash_ticker="BIL",
+        top_n_offensive=top_off,
+        top_n_defensive=top_def,
+        selection="sma13",
+        cash_ticker="BIL",
     )
 
 
@@ -1036,8 +1100,13 @@ from opt_portfolio.taa.backtest import run_backtest, run_with_ma_overlay, run_wi
 from opt_portfolio.taa.strategy import StrategySpec
 
 SPEC = StrategySpec(
-    name="allspy", canary=(), offensive=(), defensive=(),
-    top_n_offensive=0, top_n_defensive=0, static_weights={"SPY": 1.0},
+    name="allspy",
+    canary=(),
+    offensive=(),
+    defensive=(),
+    top_n_offensive=0,
+    top_n_defensive=0,
+    static_weights={"SPY": 1.0},
 )
 
 
@@ -1065,9 +1134,7 @@ class TestMaOverlay:
     def test_overlay_is_flat_when_always_above_ma(self) -> None:
         n = 40 * 21
         idx = pd.date_range("2010-01-01", periods=n, freq="B")
-        daily = pd.DataFrame(
-            {"SPY": np.linspace(100, 300, n), "IEF": np.full(n, 100.0)}, index=idx
-        )
+        daily = pd.DataFrame({"SPY": np.linspace(100, 300, n), "IEF": np.full(n, 100.0)}, index=idx)
         plain = run_backtest(SPEC, daily, cost_bps=0.0)
         overlaid = run_with_ma_overlay(SPEC, daily, cost_bps=0.0)
 
@@ -1231,45 +1298,43 @@ class TestSummarize:
 
 class TestVerdict:
     def test_rejects_when_drawdown_exceeds_limit(self) -> None:
-        m = pd.DataFrame(
-            [{"name": "a", "mdd": -0.35, "calmar": 2.0, "dsr": 0.99}]
-        ).set_index("name")
+        m = pd.DataFrame([{"name": "a", "mdd": -0.35, "calmar": 2.0, "dsr": 0.99}]).set_index(
+            "name"
+        )
         out = verdict(m, pbo=0.1, baseline_calmar=0.5)
 
         assert not out.loc["a", "adopted"]
         assert "MDD" in out.loc["a", "reason"]
 
     def test_rejects_when_dsr_below_gate(self) -> None:
-        m = pd.DataFrame(
-            [{"name": "a", "mdd": -0.15, "calmar": 2.0, "dsr": 0.80}]
-        ).set_index("name")
+        m = pd.DataFrame([{"name": "a", "mdd": -0.15, "calmar": 2.0, "dsr": 0.80}]).set_index(
+            "name"
+        )
         out = verdict(m, pbo=0.1, baseline_calmar=0.5)
 
         assert not out.loc["a", "adopted"]
         assert "DSR" in out.loc["a", "reason"]
 
     def test_rejects_when_calmar_below_baseline(self) -> None:
-        m = pd.DataFrame(
-            [{"name": "a", "mdd": -0.15, "calmar": 0.4, "dsr": 0.99}]
-        ).set_index("name")
+        m = pd.DataFrame([{"name": "a", "mdd": -0.15, "calmar": 0.4, "dsr": 0.99}]).set_index(
+            "name"
+        )
         out = verdict(m, pbo=0.1, baseline_calmar=0.5)
 
         assert not out.loc["a", "adopted"]
         assert "60/40" in out.loc["a", "reason"]
 
     def test_adopts_only_when_all_gates_pass(self) -> None:
-        m = pd.DataFrame(
-            [{"name": "a", "mdd": -0.15, "calmar": 0.9, "dsr": 0.99}]
-        ).set_index("name")
+        m = pd.DataFrame([{"name": "a", "mdd": -0.15, "calmar": 0.9, "dsr": 0.99}]).set_index(
+            "name"
+        )
         out = verdict(m, pbo=0.1, baseline_calmar=0.5)
 
         assert out.loc["a", "adopted"]
 
     def test_high_pbo_rejects_everything(self) -> None:
         """PBO 가 주 관문이다 — 넘으면 개별 성적과 무관하게 전부 기각."""
-        m = pd.DataFrame(
-            [{"name": "a", "mdd": -0.10, "calmar": 3.0, "dsr": 1.0}]
-        ).set_index("name")
+        m = pd.DataFrame([{"name": "a", "mdd": -0.10, "calmar": 3.0, "dsr": 1.0}]).set_index("name")
         out = verdict(m, pbo=0.6, baseline_calmar=0.5)
 
         assert not out.loc["a", "adopted"]
@@ -1388,7 +1453,9 @@ COST_BPS = 10.0
 def main() -> int:
     tickers = sorted({t for spec in REGISTERED.values() for t in spec.tickers()})
     daily = load_prices(tickers)
-    print(f"가격 패널: {daily.shape[1]}종목 {daily.index.min().date()} ~ {daily.index.max().date()}")
+    print(
+        f"가격 패널: {daily.shape[1]}종목 {daily.index.min().date()} ~ {daily.index.max().date()}"
+    )
 
     rets: dict[str, pd.Series] = {}
     rows = []

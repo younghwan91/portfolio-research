@@ -80,13 +80,13 @@ Sharadar/FMP 어댑터가 구현하고, 팩터 계산부는 **정규화된 표�
 
 ```python
 # base 팩터 선언 (약 55개만 손으로 작성)
-PER  = F.mktcap / F.netinc
+PER = F.mktcap / F.netinc
 GP_A = F.gp / F.assets
 
 # 파생형은 트랜스폼으로 자동 생성 — 손으로 안 짬
-PER_TTM      = PER.ttm()            # PER (TTM)
-GP_A_YOY     = GP_A.yoy()           # GP/A성장률 (YoY)
-NETINC_ACCEL = F.netinc.yoy().accel()   # 순이익성장 가속 (YoY)
+PER_TTM = PER.ttm()  # PER (TTM)
+GP_A_YOY = GP_A.yoy()  # GP/A성장률 (YoY)
+NETINC_ACCEL = F.netinc.yoy().accel()  # 순이익성장 가속 (YoY)
 ```
 
 이 방식으로 커버되는 개수:

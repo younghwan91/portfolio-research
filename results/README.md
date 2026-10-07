@@ -18,14 +18,15 @@
 
 ```python
 import json, pandas as pd, numpy as np
+
 d = json.load(open("results/oos/oos_quantus_train5.json"))
 r = pd.Series({pd.Timestamp(int(k), unit="s"): v for k, v in d.items()}).sort_index()
 
-eq   = (1 + r).cumprod()
-yrs  = (r.index[-1] - r.index[0]).days / 365.25
+eq = (1 + r).cumprod()
+yrs = (r.index[-1] - r.index[0]).days / 365.25
 cagr = eq.iloc[-1] ** (1 / yrs) - 1
-mdd  = (eq / eq.cummax() - 1).min()
-print(f"CAGR {cagr:.2%}  MDD {mdd:.1%}  Calmar {cagr/abs(mdd):.2f}")
+mdd = (eq / eq.cummax() - 1).min()
+print(f"CAGR {cagr:.2%}  MDD {mdd:.1%}  Calmar {cagr / abs(mdd):.2f}")
 # CAGR 23.74%  MDD -23.7%  Calmar 1.00
 ```
 

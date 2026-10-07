@@ -373,15 +373,16 @@ growth = (x_t - x_{t-4}) / abs(x_{t-4})     # abs() 필수
 @dataclass(frozen=True)
 class FactorSpec:
     name: str
-    category: Literal["value_price","value_ev","quality","price",
-                      "growth","acceleration","flow_proxy"]
-    expr: Expr                    # 표현식 트리
-    direction: int = +1           # +1 = 클수록 좋음, -1 = 작을수록 좋음
-    invert: bool = False          # 배수형(PER 등) → 역수로 스코어링
-    neutralize: tuple = ()        # ("sector",) / ("sector","size")
+    category: Literal[
+        "value_price", "value_ev", "quality", "price", "growth", "acceleration", "flow_proxy"
+    ]
+    expr: Expr  # 표현식 트리
+    direction: int = +1  # +1 = 클수록 좋음, -1 = 작을수록 좋음
+    invert: bool = False  # 배수형(PER 등) → 역수로 스코어링
+    neutralize: tuple = ()  # ("sector",) / ("sector","size")
     winsor: float = 0.01
-    min_periods: int = 4          # 필요한 최소 분기 수
-    requires: frozenset = ...      # 필요 소스 테이블 {"SF1","SEP","SF3"}
+    min_periods: int = 4  # 필요한 최소 분기 수
+    requires: frozenset = ...  # 필요 소스 테이블 {"SF1","SEP","SF3"}
     notes: str = ""
 ```
 
