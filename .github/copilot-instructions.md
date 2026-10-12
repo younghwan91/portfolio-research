@@ -1,6 +1,6 @@
 # Copilot Instructions
 
-> **정본은 저장소 루트의 `CLAUDE.md` 다.** 작업 규약·절대 규칙·벤더 함정은
+> **정본은 저장소 루트의 `CLAUDE.md` 다**(요약 — 전문은 `docs/rules.md`). 작업 규약·절대 규칙·벤더 함정은
 > 그쪽에만 쓰고, 이 파일은 Copilot 이 빠르게 훑을 요약만 유지한다.
 > 둘이 어긋나면 `CLAUDE.md` 를 따른다.
 
