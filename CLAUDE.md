@@ -1,211 +1,106 @@
-# opt_portfolio — 작업 규약
+# portfolio-research — 작업 규약
 
-미국 주식 팩터 투자 엔진 + 기존 ETF 자산배분 시스템.
-**두 서브시스템은 격리되어 있다.** 신규 팩터 코드는 `src/opt_portfolio/factor/` 이하에만 쓴다.
-기존 `strategies/`(VAA·OU), `analysis/`, `core/` 는 보존 대상이다.
-공유하는 것은 `analysis/metrics.py`, `analysis/risk.py`, `utils/visualization.py` 뿐이다.
+(옛 이름 `opt_portfolio`. 패키지·임포트 경로는 여전히 `opt_portfolio`.) **PUBLIC 저장소다.**
 
-**세 번째 서브시스템 `taa/` 가 있다** (2026-08-17). ETF 전술적 배분이며
-`factor/` 도 `strategies/` 도 아니다. **격리 규칙의 예외를 하나 열었다** —
-`taa/` 는 `factor.research.overfitting`(DSR·PBO)을 import 한다. 그 함수들이
-평범한 수익률 시계열만 받아 결합이 얇고, 관문 없이 만든 성과를 믿지 않는 것이
-이 저장소의 규약이기 때문이다. 다른 방향의 import 는 금지한다. 결과는
-`docs/taa/01-results.md` — 9개 구성 사전등록, PBO 관문, 채택 0개.
+미국 주식 팩터 엔진 + 기존 ETF 자산배분 시스템. **서브시스템은 격리되어 있다.**
+- 신규 팩터 코드는 `src/opt_portfolio/factor/` 이하에만 쓴다. 기존 `strategies/`(VAA·OU)·`analysis/`·`core/` 는
+  보존 대상이다. 공유하는 것은 `analysis/metrics.py`·`analysis/risk.py`·`utils/visualization.py` 뿐이다.
+- 세 번째 `taa/`(ETF 전술적 배분, 2026-08-17)는 격리 규칙의 **유일한 예외** — `factor.research.overfitting`
+  (DSR·PBO)을 import 한다. 다른 방향의 import 는 금지. 결과는 `docs/taa/01-results.md`(사전등록 9개, 채택 0개).
 
-## 명령어
+## 명령
 
 ```bash
-make install     # uv sync --extra dev
-make test        # pytest + coverage
+make install     # uv sync --extra dev — 패키지 관리는 uv(uv.lock). pip install 하지 않는다
+make test        # pytest + coverage (~20초, 540 passed · 3 skipped)
 make test-one T=tests/factor/test_dsl.py::TestX::test_y
-make lint        # ruff check + ruff format --check
+make lint        # ruff check + ruff format --check (src/ tests/ scripts/)
 make format      # ruff --fix + format
-make typecheck   # mypy src/ scripts/ + run.py — 트리 전체, 예외 없음
+make typecheck   # mypy src/ scripts/ + run.py — 트리 전체, 예외 없음 (CI 가 실패로 막는다)
+uvx pre-commit run --all-files   # CI 의 pre-commit 잡과 같다 — 푸시 전에 돌린다
 ```
 
-패키지 관리는 **uv** 다 (`uv.lock`). `pip install` 하지 않는다.
-
 팩터 엔진 CLI: `opt-factor {factors,status,ingest,validate,backtest,holdings,report,pbo,optimize}`.
-전체 사용법은 `docs/factor-system/04-data-contract.md` §5 참조.
+사용법은 `uv run opt-factor --help` 와 `docs/factor-system/04-data-contract.md` §5.
+**공식 성과 측정은 `optimize`(walk-forward)** 다. `backtest` 는 참고용.
 
 ## 절대 규칙
 
-### 1. 조용한 절단 금지 — 이 프로젝트의 지배적 실패 유형
+코드·문서 주석이 `CLAUDE.md §N` 으로 이 번호를 가리킨다 — 번호를 바꾸지 않는다.
+여기는 요약이고, 사례·수치를 담은 전문은 `docs/rules.md`.
 
-이 저장소의 실데이터 버그는 **전부** 예외 없이 "성공" 로그와 함께 발생했다.
-페이지네이션이 5년 중 2년만 싣고도 정상 종료했고, 티커 청크가 조용히 잘렸다.
+1. **조용한 절단 금지 — 이 프로젝트의 지배적 실패 유형.** 실데이터 버그는 전부 "성공" 로그와 함께 났다.
+   요청한 것보다 적게 받으면 예외를 던지거나 최소한 경고를 남긴다. 페이지네이션 종료는 "빈 응답" 이 아니라
+   **기대 범위 도달**로 검사하고, 필터·조인·병합 후 행 수가 줄면 로그로 남기고, `limit`(Sharadar 10,000)에
+   닿은 응답은 절단 의심으로 다룬다.
+   - **1-b. 낙관적인 방향의 어긋남은 스스로 드러나지 않는다.** 설정에서 방어 장치(슬리피지·최소 거래대금·
+     최소 주가)를 0/None 으로 끄면 그 이유를 설정 파일이나 커밋에 남긴다. 2026-08-15 에 셋 다 0 인 채로
+     27개 실험이 돌았다.
+2. **적재 후에는 반드시 수치로 확인한다.** `status` 만으로는 절단을 못 잡는다. 판정은 기대값 숫자 대조가
+   아니라 **벌크 원본 대조**다 — 스토어가 벌크보다 적으면 우리 잘못, 벌크 자체가 줄었으면 벤더 변경.
+   `mcap` 결측 0 은 잘못된 기준이다(보통주 약 6%가 정상). 기대값 표·검증 명령은 `docs/rules.md` §2,
+   검증 SQL 은 `04-data-contract.md` §5.
+3. **PIT 불변식을 깨지 않는다.** `datekey >= reportperiod`(`calendardate` 가 아니다 — 비표준 결산월은
+   `datekey < calendardate` 가 정상). `validate_pit_frame()`(`factor/data/provider.py`)이 마지막 방어선.
+   최초 공시 우선(정정 무시) · 혼합 소스는 늦은 쪽 공시일(`Panel.avail` element-wise max) · 추정치 소급 금지.
+   상세 `04-data-contract.md` §2.
+4. **벤더 데이터 함정 — 추측해서 코드를 쓰지 않는다.** Sharadar 직판은 숫자를 문자열로 준다(`to_numeric`).
+   DAILY 의 `marketcap`/`ev` 는 **백만 달러**(SF1 은 달러). `assetsavg`·`equityavg`·`invcapavg` 는 ARQ 에서
+   전부 null → `avg_balance()`. 절단 방향이 ticker 필터 유무로 뒤집힌다 → 항상 티커 청크로 요청.
+   불확실하면 실계정으로 확인하고 `04-data-contract.md` 에 실측을 남긴다(초판의 추정이 버그 4건을 낳았다).
+5. **완료 선언 전 증거를 제시한다.** 실제 실행 출력(행 수·날짜 범위·테스트 결과)을 확인한 뒤에 완료라고 말한다.
+6. **무거운 실행은 메모리 상한 안에서.** `opt-factor optimize` 는 RSS 5~12GB. 옛 15GB 머신에서 스왑 스래싱으로
+   sshd 까지 죽었다(2026-08-22). 지금 머신(simnode)은 RAM 61GB 이지만 다른 레포의 장시간 작업과 공유하고
+   **`runbig` 이 없다.** 상한은 `systemd-run --user --scope -p MemoryMax=24G -p MemorySwapMax=0 -- <cmd>`
+   (2026-10-05 사용 — user 매니저가 안 떠 있으면 "Failed to connect to user scope bus" 로 실패한다. 그땐
+   `free -g` 로 여유를 보고 단독 실행). **walk-forward 는 병렬로 돌리지 않는다** — `scripts/run_backtests.sh` 로 순차.
 
-> 데이터를 가져오는 코드는, 요청한 것보다 적게 받으면 **반드시 예외를 던지거나
-> 최소한 경고를 남긴다.** 조용히 진행하지 않는다.
+## 데이터 환경 (2026-10-12 확인)
 
-- 페이지네이션 루프는 종료 조건을 "빈 응답"이 아니라 **기대 범위 도달**로 검사한다.
-- 필터·조인·병합 후 행 수가 줄면 그 사실을 로그로 남긴다.
-- `limit`(Sharadar 최대 10,000)에 도달한 응답은 **절단 의심 상태**로 다룬다.
+- **스토어 `~/data/us_micro.duckdb` 는 2026-09-10 에서 멈췄다.** Sharadar 구독을 2026-09-14 해지했고
+  quant-airflow 의 `daily_sharadar` DAG 가 꺼졌다(quant-airflow 86885b8). `opt-factor ingest` 로 새 데이터가
+  온다고 가정하지 않는다. 게시 수치(README·`07-experiment-log` §5.8)는 2026-08-14 데이터로 쟀고 재측정 안 했다.
+- **그 파일은 uid 50000(airflow) 소유 644 라 이 계정이 쓸 수 없고, `PITStore` 는 쓰기 모드로 연다** →
+  `opt-factor status --store ~/data/us_micro.duckdb` 도 Permission denied. 복사본
+  `~/data/us_micro.local.duckdb` 를 쓴다(SPY 적재됨). 복사본을 새로 만들면 SPY 가 없으니
+  `uv run python scripts/ensure_benchmark.py --store <복사본> --funds-zip ~/data/sharadar/raw/funds.csv.zip`
+  (확인만은 `--check-only`). `scripts/run_backtests.sh` 는 기본 `STORE` 가 원본이라 `STORE=` 를 넘긴다.
+- 벌크 원본 `~/data/sharadar/raw/*.zip` 과 스토어는 커밋하지 않는다(벤더 라이선스, `.gitignore`). 우리가 계산한
+  산출물(수익률 시계열·IC 표)은 `results/` 에 공개한다. 매수 목록(holdings CSV)을 공개 레포에 올릴지는
+  미결정 — 2026-10-05 엔 `~/data/results/` 에만 두었다. 올리기 전에 묻는다.
+- 운용 후보는 **E안** `configs/strategy_lean_timed.json`(5팩터 + 200일 타이밍. '대형주'로 불렸지만 시총 하한이
+  없어 2026-10-05 보유 30종목의 시총 중앙값은 $1.8B, 섹터 상한도 없다). 초소형 G안은 방어 장치를
+  켜면 무너진다. 수치·남은 제약(팩터 선택이 DSR 시도 수에 미정산 등)은 `docs/rules.md` '알려진 제약'.
 
-### 1-b. 낙관적인 방향의 어긋남은 스스로 드러나지 않는다
+## 코드·커밋 규약
 
-설계 문서가 **필수**로 적은 방어 세 가지(슬리피지 10bps · 최소 거래대금 $1M ·
-최소 주가 $5)가 채택 설정에서 전부 0 인 채로 27개 실험이 돌았다 (2026-08-15 발견).
-비용 모델의 기본값조차 `slippage_bps = 10` 인데 설정이 명시적으로 덮어썼다.
+- Python 3.10+(CI 3.10~3.13), line-length **100**, ruff(lint+format, isort 는 `I`).
+  mypy `disallow_untyped_defs` — 신규 함수에는 타입 힌트 필수(CI 가 트리 전체를 막는다, fcb526d).
+- 테스트는 `tests/`(기존) / `tests/factor/`(팩터 엔진). 테스트는 네트워크 없이 돈다.
+- **pre-commit 의 `ruff-format` 은 마크다운 안 python 코드 블록도 고친다** — 문서만 고쳐도 `uvx pre-commit run
+  --all-files` 를 돌린다(474ee78: 이걸로 푸시가 막혔다). 전역 git 훅이 커밋 때 `uvx pre-commit` 을, 푸시 때
+  CI 를 로컬에서 돌린다. `.pre-commit-config.yaml` 을 고친 채 unstaged 로 두면 커밋이 거부된다.
+- 커밋 메시지는 **한국어** Conventional Commits(`feat(factor): ...`, `fix(taa): ...`, `docs(claude): ...`).
+  본문에는 무엇을 고쳤는지가 아니라 **왜 그게 문제였는지**를 쓴다. 커밋 신원은 레포 git 설정 그대로 —
+  `git -c user.email=...` 로 덮지 않는다(`commit-identity.yml` 이 거부).
+- 구 VAA 의 알려진 결함 둘(OU `range(1, forecast_days)`·클립된 μ)은 테스트가 현 동작을 고정한다 —
+  고치면 구 VAA 동작이 바뀌므로 먼저 묻는다(`CHANGELOG.md` Known issues).
+- 구현이 문서와 어긋나면 문서를 고치거나 구현을 고친다. 방치하지 않는다. 이 파일과 README 가 4개월
+  어긋났던 일이 있다(56a5fd8) — 데이터·구독 상태를 고칠 땐 README·README.ko·`docs/rules.md` 도 함께 본다.
 
-> 성과를 **좋아 보이게** 만드는 실수는 의심할 이유를 만들지 않는다.
-> 조용한 절단과 같은 계열이며, 이쪽이 더 오래 산다.
-
-설정에서 **방어 장치를 0 이나 None 으로 끄면 그 이유를 설정 파일이나 커밋에
-남긴다.** 기본값을 덮어쓰는 행위는 의도의 표현이어야 하고, 흔적이 없으면
-그것은 결정이 아니라 사고다.
-
-### 2. 적재 후에는 반드시 수치로 확인한다
-
-`status` 만으로는 절단을 못 잡는다. 풀 히스토리 번들 기준 정상값:
-
-| 검사 | 기대값 (2026-08-15 벌크 기준) |
-|---|---|
-| `prices` 종목 수 | **20,931** |
-| `prices` 날짜 범위 | **1997-12-31 ~ 최근 거래일** |
-| `prices` 행 수 | **약 4,566만** |
-| `fundamentals` 종목 수 | **17,040** |
-| `prices.mcap` 결측 (보통주) | **약 6%** — 0 이 아니다 |
-
-**이 표의 숫자는 고정 상수가 아니다.** 2026-08-12 벌크는 21,963종목·4,630만행이었고
-08-15 벌크는 20,931·4,566만이다. 벤더가 SEP 에서 **워런트를 뺐다** — 사라진
-1,037종목 중 1,035가 `Domestic/ADR Common Stock Warrant` 이고, 나머지 2는 개명이다
-(`ARIA`→`ARIA1`, `BNRG`→`BRNX`, 상장일·폐지일 동일). 워런트는 DAILY 가 시총을
-아예 주지 않아 유니버스 밴드에서 이미 100% 탈락하던 것들이라 성과에 영향이 없다.
-
-> 그래서 **기대값과 다르다는 사실만으로는 사고인지 알 수 없다.** 판정은 숫자
-> 대조가 아니라 **원본 대조**로 한다. 스토어가 벌크보다 적으면 우리 잘못이고,
-> 벌크 자체가 줄었으면 벤더 변경이다.
-
-```sh
-# 원본이 몇 종목인지 — 이것이 스토어가 가져야 할 수다
-unzip -p ~/data/sharadar/raw/stocks.csv.zip | awk -F, 'NR>1{a[$1]}END{print length(a)}'
-```
-
-스토어가 벌크보다 **많은** 것은 정상일 수 있다 — 벤치마크 SPY 는 SFP(펀드)에서
-따로 적재하고, 과거 적재분 중 현 벌크에 없는 종목이 남는다(2026-08-16 기준
-`SPY`·`ARIA`·`PSTV`·`AXIA`·`GRAF.U` 5종).
-
-**`mcap` 결측 0 은 잘못된 기준이다** (2026-08-15 실측). DAILY 는 우선주·워런트·
-2종 주식에 시총을 **아예 주지 않는다**(각 100% 결측). 전체로 보면 13.5% 가 비고,
-그중 대부분이 이 세 종류다. 보통주만 보면 6.2%, 1998년은 92%(DAILY 커버리지가
-가격보다 늦게 시작한다). 0 을 기대하면 정상 데이터를 사고로 오인한다.
-
-시총 결측은 유니버스 밴드 필터에서 조용히 탈락으로 이어지므로, **결측률이
-갑자기 오르면 그것은 벤더 커버리지가 아니라 병합 실패를 의심할 신호다.**
-
-(파일럿용 S&P500 5년 스토어라면 종목당 거래일 1,237 · 분기 19.8 이 기준이었다.)
-
-검증 SQL은 `04-data-contract.md` §5 에 있다.
-
-### 3. PIT 불변식을 깨지 않는다
-
-- `datekey >= reportperiod` — **`calendardate` 가 아니다.** 비표준 결산월 기업(NKE 5월)은
-  `datekey < calendardate` 가 정상이다. `validate_pit_frame()`(`factor/data/provider.py`)이
-  스토어 진입 전 마지막 방어선이며, `reportperiod` 가 있으면 엄격 검증하고 없으면
-  `calendardate` 대비 92일(한 분기)까지의 조기 공시를 허용한다.
-- **최초 공시 우선.** 재공시(정정)는 무시한다. 시장이 처음 본 숫자가 백테스트가 볼 숫자다.
-- 혼합 소스 표현식은 **늦은 쪽 공시일**을 따른다 (`Panel.avail` element-wise max).
-- 추정치는 소급 금지 — 수집 시작일 이전에는 PIT 가 성립하지 않는다.
-
-상세: `docs/factor-system/04-data-contract.md` §2.
-
-### 4. 벤더 데이터 함정 (실측 검증됨, 추정 금지)
-
-- Sharadar 직판은 **숫자를 문자열로** 준다 → 합산 전 `to_numeric`.
-- **DAILY 의 `marketcap`/`ev` 는 백만 달러 단위** (SF1 은 달러). 미환산 시 10⁶배 왜곡.
-- `assetsavg`·`equityavg`·`invcapavg` 는 **ARQ 차원에서 전부 null** → `avg_balance()` 로 직접 계산.
-- 절단 방향이 ticker 필터 유무로 뒤집힌다 → **항상 티커 청크로 요청**한다.
-
-벤더 동작을 **추측해서 코드를 쓰지 않는다.** 초판 문서가 추정으로 쓰였고 그 차이가 버그 4건을 낳았다.
-불확실하면 실계정으로 확인하고 `04-data-contract.md` 에 실측 결과를 남긴다.
-
-### 5. 완료 선언 전 증거를 제시한다
-
-"적재되었습니다" / "동작합니다" 는 근거가 아니다. 실제 실행 출력(행 수, 날짜 범위,
-테스트 결과)을 확인한 뒤에 완료라고 말한다.
-
-### 6. 무거운 실행은 메모리 상한 안에서 — 서버를 죽이지 않는다
-
-`opt-factor optimize` 는 RSS 8~12GB 를 쓴다. 이 저장소가 도는 머신은 RAM 15.4GB 다.
-2026-08-22 23:58, python3 잡 하나(anon-rss 8.8GB)가 스왑으로 넘어가면서 박스 전체가
-스래싱에 빠졌고 sshd 가 `fork()` 를 못 해 **접속 자체가 끊겼다.** OOM 로그의
-`task_memcg=/system.slice/ssh.service` 가 원인을 말한다 — **SSH 로 띄운 작업은
-sshd 와 같은 cgroup 을 공유한다.** 8/14~8/15 에도 `opt-factor` 가 같은 이유로 5회 죽었다.
-
-> 무거운 명령은 **`runbig` 으로 실행한다.** 앞에 단어 하나만 붙이면 된다.
-
-```sh
-runbig -m 10G -- opt-factor optimize --config configs/strategy_lean_timed.json
-journalctl --user -u <유닛명> -f      # 로그
-systemctl --user stop <유닛명>        # 중지
-```
-
-`runbig`(`~/.local/bin/runbig`)은 `systemd-run --user` 로 SSH cgroup **밖에** 유닛을 만들고
-`MemoryMax` + `MemorySwapMax=0` 을 건다. **스왑 차단이 핵심이다** — 스왑으로 도망가면
-그 작업만 죽는 게 아니라 박스 전체가 끌려간다. 부수 효과로 SSH 가 끊겨도 작업은 계속 돈다.
-
-**상한은 cgroup 총합이지 프로세스당이 아니다.** 에이전트를 병렬로 돌릴 때 각 작업에
-`-m` 을 따로 주더라도 동시 실행 합이 머신 RAM 을 넘으면 결국 누군가 죽는다.
-`알려진 제약` 의 "두 개를 동시에 돌리면 15GB 머신에서 죽는다" 가 그대로 적용된다 —
-**walk-forward 는 병렬로 돌리지 않는다.** 에이전트에게 작업을 시킬 때도 마찬가지다.
-
-## 코드 규약
-
-- Python 3.10+, line-length **100**, ruff (lint + format), isort 는 ruff `I` 규칙이 담당.
-- mypy `disallow_untyped_defs = true` — **신규 함수에는 타입 힌트가 필수다.**
-- 테스트는 `tests/` (기존) / `tests/factor/` (팩터 엔진)로 나눈다.
-- 커밋 메시지는 **한국어**, Conventional Commits 형식: `feat(factor): ...`, `fix(factor): ...`.
-  본문에는 무엇을 고쳤는지가 아니라 **왜 그게 문제였는지**를 쓴다.
-
-## 문서
+## 문서 — 해당 작업 전에 읽는다
 
 `docs/factor-system/` 이 설계의 단일 진실 공급원이다.
 
 | 파일 | 내용 |
 |---|---|
 | `00-overview.md` | 설계 개요, 데이터 소스 선정 근거 |
-| `01-factor-spec.md` | 팩터 정의 |
+| `01-factor-spec.md` · `docs/factor-library.md` | 팩터 정의 · 카탈로그 |
 | `02-universe-spec.md` | 유니버스 필터 |
 | `04-data-contract.md` | **스토어 스키마 · PIT 규약 · 벤더 실측 · 운영 절차** |
 | `05-math-spec.md` | 가중·백테스트·walk-forward 수식 |
 | `06-provider-review.md` | 벤더 12종 비교 |
-
-구현이 문서와 어긋나면 **문서를 고치거나 구현을 고친다.** 방치하지 않는다.
-
-## 알려진 제약
-
-- **게시된 수치는 2026-08-14 까지의 데이터로 측정했고, 그 뒤 데이터로 재측정하지
-  않았다.** 구독은 살아 있고 `ingest` 도 실패하지 않는다 — 스토어
-  (`~/data/us_micro.duckdb`)는 `quant-airflow` 공유 파이프라인이 계속 재구축한다
-  (2026-10-05 실측: `prices` 20,969종목 · 1994-08-11 ~ **2026-09-10** · 4,535만행,
-  `fundamentals` 17,031종목 · 최신 `datekey` 2026-09-10). 이 항목은 한때 "구독을
-  종료했고 ingest 가 실패한다"고 적혀 있었는데 사실이 아니었다 — README 는
-  2026-08-26 에 정정됐지만 이 파일은 그대로 남아 두 문서가 넉 달간 서로 어긋났다.
-  **E안 성과를 2026-09 데이터로 다시 재는 일은 아직 하지 않았다** — 추론으로
-  채우지 않는다.
-
-- 데이터는 **풀 히스토리 번들**이다 — 20,931종목 / 1997~2026, 폐지 종목 포함
-  (Enron·구 American Airlines·Ambac 실재 확인). **생존편향은 해소됐다.**
-- **초소형주 채택 전략(G안)은 방어 장치를 켜면 무너진다** (2026-08-16 검증,
-  `07-experiment-log.md` §5.5). 최소 주가 $5 · 최소 거래대금 $1M 을 켜면
-  **유니버스의 98% 가 사라져** 후보가 15~43종목만 남고, Sharpe 1.047 → −0.224 ·
-  DSR 1.000 → 0.002 다. 시총 밴드와 유동성 필터가 서로 배타적이다.
-  - 슬리피지는 문제가 아니었다 — 150bps 에서도 DSR 0.995 로 관문을 넘는다.
-    **무너뜨린 것은 유동성 필터다.**
-  - **원금 상한은 약 1억**이다. 실제 보유 종목의 일 거래대금 중앙값이 약 $45k 이고
-    그중 둘은 0 이었다. 이 규모를 넘기면 자기 주문이 체결가를 민다.
-- **운용 후보는 E안**(`configs/strategy_lean_timed.json`, 대형주 5팩터 + 200일
-  타이밍)이다 — 방어를 켠 채로 CAGR 16.34% · Sharpe 0.727 · **DSR 0.996**,
-  용량 제약 없음 (§5.8). 슬리피지를 15 → 50bps 로 올려도 CAGR 14.91% ·
-  **DSR 0.988** 로 견디며 낙폭·변동성은 그대로다. E안이 "수익률이 낮다"고 밀렸던 판정은 **두 전략을 같은
-  조건으로 비교한 적이 없는 상태**에서 내린 것이었다.
-- 남은 제약:
-  - **팩터 선택은 DSR 시도 횟수에 정산되지 않았다.** 124개를 훑어 고른 행위 자체가
-    탐색이다.
-  - **§5.7 v2 후보는 미완이다.** 방어를 켠 초소형 밴드(×1.6~×2)가 살아남는지는
-    측정하지 않았다 — 추론으로 채우지 않는다.
-  - **메모리.** 풀 히스토리 walk-forward 는 RSS 5~6GB 를 쓴다. 두 개를 동시에
-    돌리면 15GB 머신에서 죽는다 — `scripts/run_backtests.sh` 로 **순차 실행**한다.
-- 공식 성과 측정은 `backtest` 가 아니라 **`optimize`(walk-forward)** 다.
-  `backtest` 는 참고용이다.
+| `07-experiment-log.md` | 실험 기록(§5.5 초소형 붕괴 · §5.7 v2 미완 · §5.8 E안) |
+| `docs/rules.md` | 절대 규칙·알려진 제약 전문(G안 붕괴·E안 운용 후보·남은 제약) |
+| `docs/journal/README.md` | 연구 저널 — 고친 것·폐기한 것·기각한 것 |
+| `docs/taa/01-results.md` · `configs/README.md` | TAA 결과 · 설정 공개 방침 |
