@@ -6,8 +6,6 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub stars](https://img.shields.io/github/stars/younghwan91/portfolio-research?style=social)](https://github.com/younghwan91/portfolio-research)
-[![GitHub forks](https://img.shields.io/github/forks/younghwan91/portfolio-research?style=social)](https://github.com/younghwan91/portfolio-research)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
 
 This repo answers three separate questions with three separate subsystems, each measured
@@ -265,13 +263,11 @@ English: [`docs/journal/`](docs/journal/README.md) and
 
 MIT
 
-## ⭐ Star History & Support
+## Contributing & Issues
 
-[![Star History Chart](https://api.star-history.com/svg?repos=younghwan91/portfolio-research&type=Date)](https://star-history.com/#younghwan91/portfolio-research&Date)
-
-If you find this research framework helpful for factor investing or backtest overfitting analysis, please consider giving it a **[⭐ Star](https://github.com/younghwan91/portfolio-research)** on GitHub!
 - 🐛 Bugs & questions → [Issues](https://github.com/younghwan91/portfolio-research/issues)
 - 📈 Updates → [Follow @younghwan91](https://github.com/younghwan91)
+
 
 ## Related projects — open-source quant stack
 

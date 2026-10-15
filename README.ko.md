@@ -6,8 +6,6 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub stars](https://img.shields.io/github/stars/younghwan91/portfolio-research?style=social)](https://github.com/younghwan91/portfolio-research)
-[![GitHub forks](https://img.shields.io/github/forks/younghwan91/portfolio-research?style=social)](https://github.com/younghwan91/portfolio-research)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
 
 세 개의 서브시스템이 한 저장소에 있다.
@@ -200,13 +198,11 @@ make typecheck      # mypy src/
 
 MIT
 
-## ⭐ 도움이 되셨다면 (Star & 기여)
+## 기여 및 이슈 제보
 
-[![Star History Chart](https://api.star-history.com/svg?repos=younghwan91/portfolio-research&type=Date)](https://star-history.com/#younghwan91/portfolio-research&Date)
-
-`portfolio-research`가 팩터 투자 연구나 과최적화 검증(Deflated Sharpe/PBO)에 유용하셨다면 우측 상단의 **[⭐ Star](https://github.com/younghwan91/portfolio-research)** 를 눌러주세요!
-- 🐛 버그 제보 & 질문: [GitHub Issues](https://github.com/younghwan91/portfolio-research/issues)
+- 🐛 버그 제보, 질문, 기능 제안: [GitHub Issues](https://github.com/younghwan91/portfolio-research/issues)
 - 📈 업데이트 소식: [팔로우 @younghwan91](https://github.com/younghwan91)
+
 
 ## 관련 프로젝트 — 오픈소스 퀀트 스택
 
