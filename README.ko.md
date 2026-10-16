@@ -24,6 +24,57 @@
 
 ---
 
+## 빠른 시작
+
+```bash
+make install  # uv sync --extra dev — uv 필요 (https://docs.astral.sh/uv/)
+make test     # pytest + coverage — 정상 설치 검증
+```
+
+저장소에 이미 커밋된 결과를 확인하는 데에는 API 키가 필요 없다:
+
+```bash
+# 전략 탐색 비용(DSR/PBO) 재현 — 벤더 데이터 없이 results/oos/ 만 읽음
+uv run python scripts/strategy_search_cost.py
+
+# VAA 원본 전략 — 무료 데이터(yfinance), 대화형 메뉴
+make run
+```
+
+**팩터 엔진**이나 **TAA**를 처음부터 다시 돌리려면(최신 데이터 적재, 신규 설정 최적화) [Sharadar](https://sharadar.com) 구독이 필요하다 — 아래 [사용법](#사용법) 참고. 이 README에 보고된 모든 숫자는 2026-08-14까지의 데이터로 측정되었으며, [`results/`](results/)에 산출물이 함께 커밋되어 있으므로 벤더 데이터 없이도 숫자를 검증할 수 있다.
+
+## 아키텍처
+
+```mermaid
+flowchart LR
+    subgraph Factor engine["팩터 엔진 (factor/)"]
+        SH[(Sharadar<br/>sf1 · sep · daily · actions)] -->|"opt-factor ingest"| STORE[(PITStore<br/>us.duckdb)]
+        STORE --> CTX["PanelContext<br/>(datekey 정렬, look-ahead 차단)"]
+        CTX --> DSL["Factor DSL<br/>158개 팩터, factor/library"]
+        DSL --> UNIV["유니버스 필터<br/>가격 · 거래대금 · 섹터"]
+        UNIV --> PIPE["FactorPipeline.run<br/>factor/pipeline.py"]
+        PIPE --> BT["백테스트 엔진<br/>factor/backtest"]
+        BT --> WF["walk-forward 최적화<br/>opt-factor optimize"]
+        WF --> DSRF["DSR + PBO 게이트<br/>factor/research/overfitting.py"]
+        DSRF -->|"통과 시"| HOLD["opt-factor holdings<br/>매매 계획"]
+    end
+
+    subgraph TAA allocation["TAA 자산배분 (taa/)"]
+        FUNDS[(Sharadar funds bulk<br/>closeadj, 18개 ETF)] -->|"taa/data.py"| SIG["시그널<br/>13612w · sma13"]
+        SIG --> STRAT["StrategySpec 레지스트리<br/>9개 사전등록 설정"]
+        STRAT --> TBT["월간 백테스트<br/>taa/backtest.py"]
+        TBT --> EVAL["evaluate_all + 판정<br/>taa/evaluate.py"]
+        EVAL --> DSRF
+    end
+
+    subgraph Original VAA["VAA 원본 (strategies/)"]
+        YF[(yfinance<br/>일간 종가)] --> VAA["VAAStrategy<br/>strategies/vaa.py"]
+        VAA --> RUNPY["run.py / make run<br/>백테스트 + 리포트"]
+    end
+```
+
+---
+
 # 1. 팩터 엔진
 
 미국 주식 횡단면 팩터 전략을 **검증 가능한 방식으로** 만드는 엔진이다.
