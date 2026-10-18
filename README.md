@@ -2,7 +2,8 @@
 
 **English** · [한국어](README.ko.md)
 
-**US equity factor engine + tactical asset allocation (TAA) validation system.**
+**US equity factor research that charges for its own search — walk-forward only,
+Deflated Sharpe and PBO at the gate, and the rejections ship too.**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -17,26 +18,16 @@
 2022 are the 200-day overlay holding cash; those three are where the drawdown
 parts company with SPY. (Chart labels are Korean; the alt text carries the reading.)*
 
-This repo answers three separate questions with three separate subsystems, each measured
-against the same overfitting gate (Deflated Sharpe + PBO) so the results can be trusted
-rather than just produced.
+**Three things that are unusual about this repo**
 
-| | **Factor engine** (`factor/`) | **TAA allocation** (`taa/`) | **Original VAA** (`strategies/`) |
-|---|---|---|---|
-| Question | Which stocks to buy | Which asset class to rotate into | (same — first attempt) |
-| Scope | US single stocks (20,931 tickers, 1997–2026) | 18 ETFs | 7–11 ETFs |
-| Data | Sharadar direct (point-in-time, delisted included) | Sharadar funds bulk (`closeadj`) | yfinance daily closes |
-| Entry point | `opt-factor` · `opt-factor-tui` | `scripts/run_taa.py` | `make run` · `run.py` |
-| Outcome | **1 adopted** (large-cap) | **0 adopted** — all 9 failed the PBO gate | Kept as the record of why it failed |
-
-**Start with the factor engine below** — it's the only subsystem with an adopted, live
-strategy. TAA and the original VAA are validation exercises kept because *what failed and
-why* is documented.
-
-**None of the three imports another**, with one exception: `taa/` →
-`factor.research.overfitting` (DSR and PBO gate).
-
----
+- **The search is paid for at the gate.** Every published number is walk-forward,
+  then deflated for the 35 strategies tried on top of it (Deflated Sharpe) and tested
+  for backtest overfitting (PBO). Single in-sample backtests are labelled reference-only.
+- **Nine tactical-allocation configurations were pre-registered, and all nine were
+  rejected.** The gate was not relaxed to rescue them; the verdict table ships.
+- **The README's own headline was retracted.** A micro-cap strategy held this spot
+  until the mandatory guards — minimum price, minimum dollar volume, slippage — were
+  switched on and it collapsed. The chart that killed it is still below.
 
 ## Quick start
 
@@ -60,6 +51,31 @@ optimizing new configs) needs a [Sharadar](https://sharadar.com) subscription �
 [Usage](#usage) below. Everything reported in this README was measured on data through
 2026-08-14, and the outputs in [`results/`](results/) are what ships, so the numbers can
 be checked without vendor data.
+
+## What is inside
+
+Three subsystems answer three separate questions, each measured against the same
+overfitting gate (Deflated Sharpe + PBO).
+
+| | **Factor engine** (`factor/`) | **TAA allocation** (`taa/`) | **Original VAA** (`strategies/`) |
+|---|---|---|---|
+| Question | Which stocks to buy | Which asset class to rotate into | (same — first attempt) |
+| Scope | US single stocks (20,931 tickers, 1997–2026) | 18 ETFs | 7–11 ETFs |
+| Data | Sharadar direct (point-in-time, delisted included) | Sharadar funds bulk (`closeadj`) | yfinance daily closes |
+| Entry point | `opt-factor` · `opt-factor-tui` | `scripts/run_taa.py` | `make run` · `run.py` |
+| Outcome | **1 adopted** (large-cap) | **0 adopted** — all 9 failed the PBO gate | Kept as the record of why it failed |
+
+**None of the three imports another**, with one exception: `taa/` →
+`factor.research.overfitting` (DSR and PBO gate).
+
+- **Factor library — 158 factors.** Not 158 functions: a declarative expression DSL
+  generates TTM / QoQ / YoY / acceleration variants, and only factors with a documented
+  rationale are included (Novy-Marx 2013, Sloan 1996, Ball et al. 2016, Chen &
+  Zimmermann replications). Catalogue: [`docs/factor-library.md`](docs/factor-library.md).
+- **A strategy is one JSON file** in [`configs/`](configs/README.md) — adopted,
+  rejected and retired alike, operating parameters included.
+- **Point-in-time store** (`PITStore`, DuckDB) with first-print-wins fundamentals and
+  delisted names retained.
 
 ## What it looks like when it works
 
@@ -92,6 +108,55 @@ reads only `results/oos/` and needs no vendor data.
 
 <!-- PERFORMANCE:END -->
 
+## Why it is built this way
+
+Quant backtests fail in a small number of well-known ways. Each one is blocked
+structurally here, under one design principle: **never fail silently.**
+
+| Common failure | How it is prevented |
+|---|---|
+| **Survivorship bias** — only today's survivors are in the sample | Delisted names retained (Enron, old American Airlines, Ambac verified present) |
+| **Look-ahead** — using numbers before they were public | Expressions cannot touch raw tables; everything passes through `PanelContext`, which enforces `datekey` alignment |
+| **Restatement contamination** — using revised figures | **First print wins** — only the number the market originally saw is stored |
+| **Silent truncation** — partial data reported as success | Pagination raises `TruncatedDataError` when the expected range isn't reached |
+| **Overfitting** — run hundreds of variants, report the best | **Deflated Sharpe Ratio** + **PBO** charge for the number of trials |
+| **In-sample performance reporting** | Official performance is **walk-forward only**; single backtests are labelled reference-only |
+
+### What was retired, and what it cost
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/guards-dark.png">
+  <img alt="Cumulative growth of the micro-cap strategy: 153x with the guards off, 0.040x with them on — a 96% loss of principal. Log vertical axis." src="docs/images/guards-light.png">
+</picture>
+
+*Same strategy, same window; the only difference is slippage, minimum price and
+minimum dollar volume. The blue line was this README's headline until 2026-08-16.*
+
+A **micro-cap, 8-factor strategy** at CAGR 23.78% stood here until the three guards
+the design document calls mandatory were switched on. They collapse it — **Sharpe
+1.047 → −0.224** — because 98% of the universe disappears with them on. The headline
+moved to the large-cap strategy, which had always been measured with its guards on and
+so had never been compared on equal terms.
+
+Over twenty candidates were rejected at the Deflated Sharpe gate, and the PBO number
+was published wrong twice before it was measured properly. **The whole trail is
+written down:** [`docs/journal/`](docs/journal/README.md).
+
+### Tactical asset allocation — nine pre-registered, nine rejected
+
+Monthly rotation across 18 ETFs. **Nine pre-registered configurations, all nine
+rejected: PBO = 0.770.** The gate was not relaxed.
+
+That does not mean nothing works. All six BAA variants (Keller 2022) beat 60/40 on
+Calmar without exception, 0.535–0.812 against 0.354 — but PBO across just those six is
+0.861, so **which one is best cannot be determined from this data.** Both sentences
+have to stand together.
+
+The nine configurations, the eight defects caught along the way, and why VAA measured
+6.07% here against the papers' 16–17% are in
+[`docs/taa/01-results.md`](docs/taa/01-results.md) (Korean) and
+[`docs/journal/`](docs/journal/README.md).
+
 ## Architecture
 
 ```mermaid
@@ -122,53 +187,6 @@ flowchart LR
     end
 ```
 
----
-
-# 1. Factor engine
-
-A cross-sectional US equity factor engine built so that results can be **trusted, not just produced**.
-One design principle drives everything: **never fail silently.**
-
-## Why this engine
-
-Quant backtests fail in a small number of well-known ways. Each one is blocked structurally here.
-
-| Common failure | How it is prevented |
-|---|---|
-| **Survivorship bias** — only today's survivors are in the sample | Delisted names retained (Enron, old American Airlines, Ambac verified present) |
-| **Look-ahead** — using numbers before they were public | Expressions cannot touch raw tables; everything passes through `PanelContext`, which enforces `datekey` alignment |
-| **Restatement contamination** — using revised figures | **First print wins** — only the number the market originally saw is stored |
-| **Silent truncation** — partial data reported as success | Pagination raises `TruncatedDataError` when the expected range isn't reached |
-| **Overfitting** — run hundreds of variants, report the best | **Deflated Sharpe Ratio** + **PBO** charge for the number of trials |
-| **In-sample performance reporting** | Official performance is **walk-forward only**; single backtests are labelled reference-only |
-
-## What was retired, and what it cost
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/guards-dark.png">
-  <img alt="Cumulative growth of the micro-cap strategy: 153x with the guards off, 0.040x with them on — a 96% loss of principal. Log vertical axis." src="docs/images/guards-light.png">
-</picture>
-
-*Same strategy, same window; the only difference is slippage, minimum price and
-minimum dollar volume. The blue line was this README's headline until 2026-08-16.*
-
-A **micro-cap, 8-factor strategy** at CAGR 23.78% stood here until the three guards
-the design document calls mandatory were switched on. They collapse it — **Sharpe
-1.047 → −0.224** — because 98% of the universe disappears with them on. The headline
-moved to the large-cap strategy, which had always been measured with its guards on and
-so had never been compared on equal terms.
-
-Over twenty candidates were rejected at the Deflated Sharpe gate, and the PBO number
-was published wrong twice before it was measured properly. **The whole trail is
-written down:** [`docs/journal/`](docs/journal/README.md).
-
-## Factor library — 158 factors
-
-Not 158 functions — a **declarative expression DSL** generates TTM / QoQ / YoY /
-acceleration variants automatically, and only factors with a documented rationale are
-included (Novy-Marx 2013, Sloan 1996, Ball et al. 2016, plus Chen & Zimmermann
-replications). Categories and counts: [`docs/factor-library.md`](docs/factor-library.md).
-
 ## Usage
 
 > Reproducing the ingest/optimize commands below needs a
@@ -192,34 +210,10 @@ opt-factor optimize --store us.duckdb --config configs/strategy_lean_timed.json 
 # What to buy today (pass current holdings to get a trade plan)
 opt-factor holdings --store us.duckdb \
   --config configs/strategy_lean_timed.json --current my_holdings.csv
+
+# TAA: 9 configurations · PBO · verdict table
+uv run python scripts/run_taa.py
 ```
-
-A strategy is fully declared by one JSON file in [`configs/`](configs/README.md) —
-adopted, rejected and retired alike, including the operating parameters.
-
----
-
-# 2. Tactical asset allocation (TAA)
-
-Monthly rotation across 18 ETFs. **Nine pre-registered configurations, all nine
-rejected: PBO = 0.770.** The gate was not relaxed.
-
-That does not mean nothing works. All six BAA variants (Keller 2022) beat 60/40 on
-Calmar without exception, 0.535–0.812 against 0.354 — but PBO across just those six is
-0.861, so **which one is best cannot be determined from this data.** Both sentences
-have to stand together.
-
-The nine configurations, the eight defects caught along the way, and why VAA measured
-6.07% here against the papers' 16–17% are in
-[`docs/taa/01-results.md`](docs/taa/01-results.md) (Korean) and
-[`docs/journal/`](docs/journal/README.md).
-
-```bash
-uv run python scripts/run_taa.py    # 9 configurations · PBO · verdict table
-make run                            # original VAA (yfinance, kept for the record)
-```
-
----
 
 ## Develop
 
@@ -231,6 +225,8 @@ make typecheck  # mypy src/
 Dependencies are managed with **uv** (`uv.lock`). Do not use `pip install`. Code lives
 in `src/opt_portfolio/`: `factor/`, `taa/`, `strategies/`, with `analysis/` and
 `core/` shared.
+
+## Documentation
 
 Design documents are Korean, in [`docs/factor-system/`](docs/factor-system/) — specs,
 the **data contract** (store schema · PIT rules · vendor measurements), the
