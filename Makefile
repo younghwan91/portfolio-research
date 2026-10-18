@@ -33,7 +33,7 @@ typecheck:
 	uv run mypy run.py
 
 run:
-	python3 run.py
+	uv run python run.py
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
