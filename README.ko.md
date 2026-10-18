@@ -8,6 +8,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
+  <img alt="대형주 5팩터 + 200일 타이밍의 walk-forward 검증 구간 누적 성장 — 2002-12부터 2026-08까지 15bps 36배, 50bps 27배, SPY 14배. 세로축 로그" src="docs/images/performance-light.png" width="100%">
+</picture>
+
+*세로축은 로그다 — 기울기가 같으면 수익률이 같다. 2008·2012·2022 의 평평한
+구간은 200일 이평이 현금으로 뺀 자리다. 그 세 번이 SPY 와 낙폭이 갈리는 지점이다.*
+
 세 개의 서브시스템이 한 저장소에 있다.
 
 | | **팩터 엔진** (`factor/`) | **TAA 자산배분** (`taa/`) | **VAA 원본** (`strategies/`) |
@@ -94,14 +102,6 @@ flowchart LR
 | 인샘플 성과 보고 | 공식 성과는 **walk-forward** 뿐. 단일 백테스트는 참고용 명시 |
 
 ## 성과
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
-  <img alt="대형주 5팩터 + 200일 타이밍의 walk-forward 검증 구간 누적 성장 — 2002-12부터 2026-08까지 15bps 36배, 50bps 27배, SPY 14배. 세로축 로그" src="docs/images/performance-light.png">
-</picture>
-
-*세로축은 로그다 — 기울기가 같으면 수익률이 같다. 2008·2012·2022 의 평평한
-구간은 200일 이평이 현금으로 뺀 자리다. 그 세 번이 SPY 와 낙폭이 갈리는 지점이다.*
 
 <!-- PERFORMANCE:START -->
 

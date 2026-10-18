@@ -8,6 +8,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
+  <img alt="Cumulative growth over the walk-forward validation window, 2002-12 to 2026-08: large-cap 5-factor with 200-day timing reaches 36x at 15bps slippage and 27x at 50bps, against 14x for SPY buy-and-hold. Log vertical axis." src="docs/images/performance-light.png" width="100%">
+</picture>
+
+*Log scale — equal slopes mean equal returns. The flat stretches in 2008, 2012 and
+2022 are the 200-day overlay holding cash; those three are where the drawdown
+parts company with SPY. (Chart labels are Korean; the alt text carries the reading.)*
+
 This repo answers three separate questions with three separate subsystems, each measured
 against the same overfitting gate (Deflated Sharpe + PBO) so the results can be trusted
 rather than just produced.
@@ -53,15 +62,6 @@ optimizing new configs) needs a [Sharadar](https://sharadar.com) subscription �
 be checked without vendor data.
 
 ## What it looks like when it works
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
-  <img alt="Cumulative growth over the walk-forward validation window, 2002-12 to 2026-08: large-cap 5-factor with 200-day timing reaches 36x at 15bps slippage and 27x at 50bps, against 14x for SPY buy-and-hold. Log vertical axis." src="docs/images/performance-light.png">
-</picture>
-
-*Log scale — equal slopes mean equal returns. The flat stretches in 2008, 2012 and
-2022 are the 200-day overlay holding cash; those three are where the drawdown
-parts company with SPY. (Chart labels are Korean; the alt text carries the reading.)*
 
 <!-- PERFORMANCE:START -->
 

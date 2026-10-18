@@ -39,7 +39,7 @@ OUT = Path(__file__).resolve().parents[1] / "docs/images"
 #: 어두운 표면에 맞춰 따로 고른 단계다.
 THEME = {
     "light": {
-        "surface": "#fcfcfb",
+        "surface": "#ffffff",
         "ink": "#0b0b0b",
         "muted": "#52514e",
         "grid": "#e3e2df",
@@ -47,7 +47,7 @@ THEME = {
         "critical": "#e34948",
     },
     "dark": {
-        "surface": "#1a1a19",
+        "surface": "#0d1117",
         "ink": "#ffffff",
         "muted": "#c3c2b7",
         "grid": "#33322f",
@@ -133,9 +133,16 @@ def _spy_daily(index: pd.DatetimeIndex) -> pd.Series:
     """벤치마크 일별 수익률 — 스토어의 SPY 를 검증 구간에 맞춘다."""
     import duckdb
 
+    # SPY 는 로컬 복사본에만 적재돼 있다(CLAUDE.md "데이터 환경"). 원본은 SPY 가 0행이라
+    # 그대로 읽으면 벤치마크가 1배 평선으로 조용히 그려진다 — 비면 예외(CLAUDE.md §1).
+    store = DATA / "us_micro.local.duckdb"
+    if not store.exists():
+        store = DATA / "us_micro.duckdb"
     con = duckdb.connect()
-    con.execute(f"attach '{DATA / 'us_micro.duckdb'}' as s (read_only)")
+    con.execute(f"attach '{store}' as s (read_only)")
     df = con.execute("select date, close from s.prices where ticker='SPY' order by date").df()
+    if df.empty:
+        raise RuntimeError(f"스토어에 SPY 가 없다: {store} — ensure_benchmark.py 로 적재하라")
     px = pd.Series(df["close"].to_numpy(), index=pd.DatetimeIndex(df["date"])).astype(float)
     return px.pct_change(fill_method=None).reindex(index).fillna(0.0)
 
@@ -269,6 +276,7 @@ def _pick_korean_font() -> str:
         "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
         "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
         "/usr/share/fonts/truetype/noto/NotoSansKR-Regular.otf",
+        str(Path.home() / ".local/share/fonts/noto-kr/NotoSansKR-Regular.otf"),
     ):
         if not Path(path).exists():
             continue
