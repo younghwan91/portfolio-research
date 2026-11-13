@@ -91,6 +91,11 @@ uvx pre-commit run --all-files   # CI 의 pre-commit 잡과 같다 — 푸시 �
 - 구현이 문서와 어긋나면 문서를 고치거나 구현을 고친다. 방치하지 않는다. 이 파일과 README 가 4개월
   어긋났던 일이 있다(56a5fd8) — 데이터·구독 상태를 고칠 땐 README·README.ko·`docs/rules.md` 도 함께 본다.
 
+## 연구 루프
+
+- 실험·세대 결과마다 `quant-reviewer` 에이전트를 같이(또는 직후) 띄우고, 보유·거래 재계산은 `haiku-verifier` 10~20개를 한 메시지에서 병렬로. 리뷰의 CRITICAL/MAJOR 를 반영하기 전엔 결론을 보고하지 않는다.
+- 한 실험(세대) = 한 세션이 기본. 결정·결과는 `docs/factor-system/07-experiment-log.md`·`docs/journal/`에 바로 적고 새 세션은 그 파일에서 출발한다. 컨텍스트가 60%를 넘으면 그 파일을 갱신한 뒤 새 세션을 제안한다.
+
 ## 문서 — 해당 작업 전에 읽는다
 
 `docs/factor-system/` 이 설계의 단일 진실 공급원이다.
