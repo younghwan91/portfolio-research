@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 64" height="64" fill="none">
+  <defs>
+    <linearGradient id="pr-bg-l" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="pr-arc-l" x1="16" y1="48" x2="48" y2="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#pr-bg-l)"/>
+  <circle cx="32" cy="32" r="18" stroke="#10B981" stroke-width="3" stroke-dasharray="34 8 24 8 30 9" stroke-opacity="0.35"/>
+  <path d="M 16 46 Q 22 22 48 18" stroke="url(#pr-arc-l)" stroke-width="2.6" stroke-linecap="round"/>
+  <line x1="14" y1="44" x2="50" y2="14" stroke="#FBBF24" stroke-width="1.6" stroke-dasharray="3 3" stroke-opacity="0.85"/>
+  <circle cx="29" cy="27" r="4.2" fill="#FBBF24" stroke="#064E3B" stroke-width="1.5"/>
+  <circle cx="19" cy="39" r="2.6" fill="#34D399"/>
+  <circle cx="43" cy="20" r="2.6" fill="#34D399"/>
+  <text x="80" y="31" fill="#0F172A" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.4">portfolio-research</text>
+  <text x="80" y="49" fill="#475569" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" letter-spacing="0.8">WALK-FORWARD FACTOR &amp; DSR/PBO ENGINE</text>
+</svg>

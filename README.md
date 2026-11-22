@@ -1,22 +1,16 @@
-# portfolio-research
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/brand/wordmark-dark.svg">
+  <img alt="portfolio-research" src="docs/images/brand/wordmark-light.svg" height="56">
+</picture>
 
 **English** · [한국어](README.ko.md)
 
-**US equity factor research that charges for its own search — walk-forward only,
-Deflated Sharpe and PBO at the gate, and the rejections ship too.**
+**US equity factor research that charges for its own search — walk-forward only, Deflated Sharpe and PBO at the gate, and the rejections ship too.**
 
+[![CI](https://github.com/younghwan91/portfolio-research/actions/workflows/ci.yml/badge.svg)](https://github.com/younghwan91/portfolio-research/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
-  <img alt="Cumulative growth over the walk-forward validation window, 2002-12 to 2026-08: large-cap 5-factor with 200-day timing reaches 36x at 15bps slippage and 27x at 50bps, against 14x for SPY buy-and-hold. Log vertical axis." src="docs/images/performance-light.png" width="100%">
-</picture>
-
-*Log scale — equal slopes mean equal returns. The flat stretches in 2008, 2012 and
-2022 are the 200-day overlay holding cash; those three are where the drawdown
-parts company with SPY. (Chart labels are Korean; the alt text carries the reading.)*
 
 **Three things that are unusual about this repo**
 
@@ -51,6 +45,15 @@ optimizing new configs) needs a [Sharadar](https://sharadar.com) subscription �
 [Usage](#usage) below. Everything reported in this README was measured on data through
 2026-08-14, and the outputs in [`results/`](results/) are what ships, so the numbers can
 be checked without vendor data.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
+  <img alt="Cumulative growth over the walk-forward validation window, 2002-12 to 2026-08: large-cap 5-factor with 200-day timing reaches 36x at 15bps slippage and 27x at 50bps, against 14x for SPY buy-and-hold. Log vertical axis." src="docs/images/performance-light.png" width="100%">
+</picture>
+
+*Log scale — equal slopes mean equal returns. The flat stretches in 2008, 2012 and
+2022 are the 200-day overlay holding cash; those three are where the drawdown
+parts company with SPY. (Chart labels are Korean; the alt text carries the reading.)*
 
 ## What is inside
 
