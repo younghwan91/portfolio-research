@@ -1,21 +1,16 @@
-# portfolio-research
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/brand/wordmark-dark.svg">
+  <img alt="portfolio-research" src="docs/images/brand/wordmark-light.svg" height="56">
+</picture>
 
 **한국어** · [English](README.md)
 
-**탐색 비용을 스스로 정산하는 미국 주식 팩터 연구 — 성과는 walk-forward 만,
-관문은 Deflated Sharpe 와 PBO, 기각한 것까지 함께 공개한다.**
+**탐색 비용을 스스로 정산하는 미국 주식 팩터 연구 — 성과는 walk-forward 만, 관문은 Deflated Sharpe 와 PBO, 기각한 것까지 함께 공개한다.**
 
+[![CI](https://github.com/younghwan91/portfolio-research/actions/workflows/ci.yml/badge.svg)](https://github.com/younghwan91/portfolio-research/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
-  <img alt="대형주 5팩터 + 200일 타이밍의 walk-forward 검증 구간 누적 성장 — 2002-12부터 2026-08까지 15bps 36배, 50bps 27배, SPY 14배. 세로축 로그" src="docs/images/performance-light.png" width="100%">
-</picture>
-
-*세로축은 로그다 — 기울기가 같으면 수익률이 같다. 2008·2012·2022 의 평평한
-구간은 200일 이평이 현금으로 뺀 자리다. 그 세 번이 SPY 와 낙폭이 갈리는 지점이다.*
 
 **이 저장소가 흔치 않은 이유 셋**
 
@@ -49,6 +44,14 @@ make run
 최적화) [Sharadar](https://sharadar.com) 구독이 필요하다 — 아래 [사용법](#사용법).
 이 README 의 숫자는 전부 2026-08-14 까지의 데이터로 쟀고, 산출물이
 [`results/`](results/) 에 함께 커밋되어 있어 벤더 데이터 없이도 대조할 수 있다.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
+  <img alt="대형주 5팩터 + 200일 타이밍의 walk-forward 검증 구간 누적 성장 — 2002-12부터 2026-08까지 15bps 36배, 50bps 27배, SPY 14배. 세로축 로그" src="docs/images/performance-light.png" width="100%">
+</picture>
+
+*세로축은 로그다 — 기울기가 같으면 수익률이 같다. 2008·2012·2022 의 평평한
+구간은 200일 이평이 현금으로 뺀 자리다. 그 세 번이 SPY 와 낙폭이 갈리는 지점이다.*
 
 ## 무엇이 들어 있나
 
