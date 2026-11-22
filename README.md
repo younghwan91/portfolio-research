@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/brand/banner-dark.svg">
-  <img alt="portfolio-research" src="docs/images/brand/banner-light.svg" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/brand/wordmark-dark.svg">
+  <img alt="portfolio-research" src="docs/images/brand/wordmark-light.svg" height="52">
 </picture>
 
 **English** · [한국어](README.ko.md)
