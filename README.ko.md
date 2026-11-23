@@ -1,27 +1,31 @@
+<div align="center">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/brand/wordmark-dark.svg">
   <img alt="portfolio-research" src="docs/images/brand/wordmark-light.svg" height="52">
 </picture>
 
-**한국어** · [English](README.md)
+# portfolio-research
 
-**탐색 비용을 스스로 정산하는 미국 주식 팩터 연구 — 성과는 walk-forward 만, 관문은 Deflated Sharpe 와 PBO, 기각한 것까지 함께 공개한다.**
+**탐색 비용을 스스로 정산하는 미국 주식 팩터 연구 — 성과는 walk-forward만, 관문은 Deflated Sharpe와 PBO로 거르고 기각한 결과까지 함께 공개합니다.**
+
+상장폐지 종목을 포함한 point-in-time 데이터 위에서 조용한 절단 없이 검증하고, 기각 기록까지 남깁니다.
 
 [![CI](https://github.com/younghwan91/portfolio-research/actions/workflows/ci.yml/badge.svg)](https://github.com/younghwan91/portfolio-research/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
 
-**이 저장소가 흔치 않은 이유 셋**
+[가이드](docs/guide.ko.md) · [팩터 라이브러리](docs/factor-library.ko.md) · [연구 저널](docs/journal/README.ko.md) · [English](README.md)
 
-- **탐색 비용을 관문에서 치른다.** 공개하는 숫자는 전부 walk-forward 이고, 그 위에서
-  35개 전략을 훑어 하나를 고른 행위까지 Deflated Sharpe 로 깎고 PBO 로 검사한다.
-  단일 백테스트는 참고용이라고 명시한다.
-- **자산배분 9개 구성을 사전등록하고 9개 전부 기각했다.** 살리려고 관문을 완화하지
-  않았고, 판정표를 그대로 실었다.
-- **이 README 의 표제 숫자를 스스로 철회했다.** 초소형주 전략이 이 자리에 있다가,
-  설계 문서가 필수라고 적은 방어 장치(최소 주가·최소 거래대금·슬리피지)를 켜자
-  무너졌다. 그 그림은 아래에 그대로 남겨 두었다.
+</div>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
+  <img alt="대형주 5팩터 + 200일 타이밍의 walk-forward 검증 구간 누적 성장 — 2002-12부터 2026-08까지 15bps 36배, 50bps 27배, SPY 14배. 세로축 로그" src="docs/images/performance-light.png" width="100%">
+</picture>
+
+<p align="center"><sub>세로축은 로그 스케일입니다 — 기울기가 같으면 수익률이 같습니다. 2008·2012·2022의 평평한 구간은 200일 이동평균이 현금으로 전환한 자리입니다.</sub></p>
 
 ## 빠른 시작
 
@@ -30,33 +34,21 @@ make install  # uv sync --extra dev — uv 필요 (https://docs.astral.sh/uv/)
 make test     # pytest + coverage — 정상 설치 검증
 ```
 
-저장소에 이미 커밋된 결과를 확인하는 데에는 API 키가 필요 없다:
+저장소에 이미 커밋된 결과는 API 키나 벤더 데이터 없이 바로 확인할 수 있습니다.
 
 ```bash
-# 전략 탐색 비용(DSR/PBO) 재현 — 벤더 데이터 없이 results/oos/ 만 읽음
+# 전략 탐색 비용(DSR/PBO) 재현 — 벤더 데이터 없이 results/oos/만 읽음
 uv run python scripts/strategy_search_cost.py
 
 # VAA 원본 전략 — 무료 데이터(yfinance), 대화형 메뉴
 make run
 ```
 
-**팩터 엔진**이나 **TAA** 를 처음부터 다시 돌리려면(최신 데이터 적재, 신규 설정
-최적화) [Sharadar](https://sharadar.com) 구독이 필요하다 — 아래 [사용법](#사용법).
-이 README 의 숫자는 전부 2026-08-14 까지의 데이터로 쟀고, 산출물이
-[`results/`](results/) 에 함께 커밋되어 있어 벤더 데이터 없이도 대조할 수 있다.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
-  <img alt="대형주 5팩터 + 200일 타이밍의 walk-forward 검증 구간 누적 성장 — 2002-12부터 2026-08까지 15bps 36배, 50bps 27배, SPY 14배. 세로축 로그" src="docs/images/performance-light.png" width="100%">
-</picture>
-
-*세로축은 로그다 — 기울기가 같으면 수익률이 같다. 2008·2012·2022 의 평평한
-구간은 200일 이평이 현금으로 뺀 자리다. 그 세 번이 SPY 와 낙폭이 갈리는 지점이다.*
+이 문서의 모든 수치는 2026-08-14까지의 데이터로 측정했으며 산출물은 [`results/`](results/)에 함께 커밋되어 있습니다. 팩터 엔진이나 TAA를 처음부터 다시 돌리려면 [Sharadar](https://sharadar.com) 구독이 필요합니다 — 자세한 명령은 [사용법](docs/guide.ko.md#사용법)을 참고하세요.
 
 ## 무엇이 들어 있나
 
-세 개의 서브시스템이 서로 다른 질문에 답하고, 같은 과최적화 관문(Deflated Sharpe +
-PBO)으로 잰다.
+세 개의 격리된 서브시스템이 서로 다른 질문에 답하고, 같은 과최적화 관문(Deflated Sharpe + PBO)으로 평가합니다. `taa/` → `factor.research.overfitting`을 제외하면 서로를 import하지 않습니다.
 
 | | **팩터 엔진** (`factor/`) | **TAA 자산배분** (`taa/`) | **VAA 원본** (`strategies/`) |
 |---|---|---|---|
@@ -66,16 +58,9 @@ PBO)으로 잰다.
 | 진입점 | `opt-factor` · `opt-factor-tui` | `scripts/run_taa.py` | `make run` · `run.py` |
 | 결과 | **채택 1건** (대형주 E안) | **채택 0건** — 9개 전부 PBO 관문 탈락 | 보존 — 왜 실패했는지의 기록 |
 
-**세 시스템은 서로를 import 하지 않는다.** 예외는 `taa/` →
-`factor.research.overfitting`(DSR·PBO) 하나뿐이다.
-
-- **팩터 라이브러리 158개.** 함수 158개가 아니다. 선언형 표현식 DSL 이 TTM·QoQ·YoY·
-  가속 변형을 자동 생성하고, 문헌 근거가 있는 것만 담는다(Novy-Marx 2013, Sloan 1996,
-  Ball et al. 2016, Chen & Zimmermann 복제). 분류와 개수는
-  [`docs/factor-library.ko.md`](docs/factor-library.ko.md).
-- **전략은 JSON 한 파일**이다. [`configs/`](configs/README.md) 에 채택한 것, 기각한 것,
-  폐기한 것을 운용 파라미터까지 전부 둔다.
-- **PIT 스토어**(`PITStore`, DuckDB) — 최초 공시 우선, 상장폐지 종목 보존.
+- **선언형 DSL 기반 팩터 158개.** 문헌 근거(Novy-Marx 2013, Sloan 1996, Ball et al. 2016, Chen & Zimmermann)가 있는 팩터만 담고 TTM·QoQ·YoY·가속 변형을 자동 생성합니다. 분류와 개수는 [`docs/factor-library.ko.md`](docs/factor-library.ko.md)에 있습니다.
+- **전략당 JSON 한 파일.** 채택·기각·폐기한 전략과 운용 파라미터를 [`configs/`](configs/README.md)에 모두 공개합니다.
+- **PIT 스토어.** `PITStore`(DuckDB)가 최초 공시 우선 원칙을 지키며 상장폐지 종목을 보존합니다.
 
 ## 성과
 
@@ -96,167 +81,53 @@ PBO)으로 잰다.
 | Deflated Sharpe (**전략 탐색 35회**) | **0.982** ✓ | 0.957 ✓ | — |
 | PBO (35개 구성 CSCV · 월별 · S=16) | **0.303** ✓ | — | — |
 
-**이 전략은 방어 장치를 켠 채로 측정됐다** — 최소 주가 $5 · 최소 거래대금 $1M ·
-슬리피지. 유니버스가 역대 S&P500 이라 **용량 제약이 없다.** 슬리피지를 50bps 로
-올려도 낙폭과 변동성이 그대로고 수익만 1.4%p 깎인다.
+**방어 장치를 모두 켠 채로 측정했습니다** — 최소 주가 $5 · 최소 거래대금 $1M · 슬리피지. 유니버스가 역대 S&P500이라 용량 제약이 없습니다. 슬리피지를 50bps로 올려도 낙폭과 변동성은 그대로이고 수익만 1.4%p 줄어듭니다.
 
-마지막 두 줄은 **walk-forward 바깥**을 정산한 값이다 — "35개 전략을 훑어 하나를
-골랐다"는 상위 탐색까지 시도 횟수에 넣었다. 관문 설정(월별 · S=16)을 고른 근거는
-아래에 있다. 재현: `uv run python scripts/strategy_search_cost.py` — 벤더 데이터
-없이 `results/oos/` 만으로 돈다.
+마지막 두 줄은 **walk-forward 바깥**을 정산한 값입니다("35개 전략을 훑어 하나를 골랐다"는 상위 탐색까지 시도 횟수에 반영). `uv run python scripts/strategy_search_cost.py`로 `results/oos/`만으로 재현할 수 있습니다.
 
 <!-- PERFORMANCE:END -->
 
 ## 왜 이렇게 만들었나
 
-퀀트 백테스트가 실패하는 방식은 대개 정해져 있고, 이 엔진은 그 각각을 구조로
-막는다. 원칙은 하나다 — **조용히 틀리지 않는다.**
+퀀트 백테스트가 실패하는 전형적인 원인을 구조적으로 차단합니다. 원칙은 하나, **조용히 틀리지 않는 것**입니다.
 
 | 흔한 실패 | 이 엔진의 대응 |
 |---|---|
-| 생존편향 — 지금 살아남은 종목만 본다 | 상장폐지 종목 포함 (엔론·구 아메리칸항공 등 실제 확인) |
-| Look-ahead — 발표 전 숫자를 쓴다 | 표현식이 원시 테이블에 접근 못 하고 `PanelContext` 만 통과, `datekey` 정렬 강제 |
-| 재공시 오염 — 정정된 숫자를 쓴다 | **최초 공시 우선** — 시장이 처음 본 값만 저장 |
-| 조용한 절단 — 데이터가 덜 왔는데 성공 처리 | 페이지네이션이 기대 범위 미달 시 `TruncatedDataError` |
-| 과최적화 — 수백 번 돌려 최고를 고른다 | **DSR**(Deflated Sharpe) + **PBO** 로 시도 횟수를 정산 |
-| 인샘플 성과 보고 | 공식 성과는 **walk-forward** 뿐. 단일 백테스트는 참고용 명시 |
+| **생존편향** | 상장폐지 종목 포함 (엔론·구 아메리칸항공 등 실제 확인) |
+| **Look-ahead** | 표현식이 원시 테이블에 접근 못 하고 `PanelContext`가 `datekey` 정렬 강제 |
+| **재공시 오염** | **최초 공시 우선** — 시장이 처음 본 값만 저장 |
+| **조용한 절단** | 페이지네이션이 기대 범위 미달 시 `TruncatedDataError` 발생 |
+| **과최적화** | **DSR**(Deflated Sharpe) + **PBO**로 시도 횟수 정산 |
+| **인샘플 성과 보고** | 공식 성과는 **walk-forward**만 인정, 단일 백테스트는 참고용 명시 |
 
-### 폐기한 것과 그 대가
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/guards-dark.png">
-  <img alt="초소형주 전략의 누적 성장 — 방어 장치를 끄면 153배, 켜면 0.040배로 원금의 96%를 잃는다. 세로축 로그" src="docs/images/guards-light.png">
-</picture>
-
-*같은 전략, 같은 구간. 차이는 슬리피지·최소 주가·최소 거래대금뿐이다. 파란 선이
-2026-08-16 까지 이 README 의 표제였다.*
-
-CAGR 23.78% 의 **초소형주 8팩터 전략**이 이 자리에 있었다. 설계 문서가 필수라고
-적은 방어 장치 셋을 켜자 무너졌다 — **Sharpe 1.047 → −0.224.** 방어를 켜면
-유니버스의 98% 가 사라지기 때문이다. 표제는 대형주 전략으로 옮겼다. 그쪽은 처음부터
-방어를 켠 채로 쟀고, 그래서 두 전략을 같은 조건에서 비교한 적이 없었다.
-
-DSR 관문에서 기각한 후보가 스무 개를 넘고, PBO 는 제대로 재기 전까지 두 번 틀린 채로
-발표됐다. **그 자취를 전부 남겼다 —** [`docs/journal/`](docs/journal/README.ko.md).
-
-### 전술적 자산배분 — 9개 사전등록, 9개 기각
-
-개별 종목 대신 ETF 18종을 매월 교체한다. **9개 구성을 사전등록했고 9개 전부
-기각했다 — PBO 0.770.** 관문을 완화하지 않았다.
-
-아무것도 안 통한다는 뜻은 아니다. BAA(Keller 2022) 변형 6개는 예외 없이 Calmar 에서
-60/40 을 이긴다(0.535~0.812 대 0.354). 다만 그 6개만으로 잰 PBO 가 0.861 이라
-**그중 어느 것이 최선인지는 이 데이터로 정할 수 없다.** 두 문장은 함께 서야 한다.
-
-9개 구성과 이 과정에서 잡은 결함 8건, VAA 가 논문의 16~17% 대신 여기서 6.07% 로
-측정된 이유는 [`docs/taa/01-results.md`](docs/taa/01-results.md) 와
-[`docs/journal/`](docs/journal/README.ko.md) 에 있다.
-
-## 아키텍처
-
-```mermaid
-flowchart LR
-    subgraph Factor engine["팩터 엔진 (factor/)"]
-        SH[(Sharadar<br/>sf1 · sep · daily · actions)] -->|"opt-factor ingest"| STORE[(PITStore<br/>us.duckdb)]
-        STORE --> CTX["PanelContext<br/>(datekey 정렬, look-ahead 차단)"]
-        CTX --> DSL["Factor DSL<br/>158개 팩터, factor/library"]
-        DSL --> UNIV["유니버스 필터<br/>가격 · 거래대금 · 섹터"]
-        UNIV --> PIPE["FactorPipeline.run<br/>factor/pipeline.py"]
-        PIPE --> BT["백테스트 엔진<br/>factor/backtest"]
-        BT --> WF["walk-forward 최적화<br/>opt-factor optimize"]
-        WF --> DSRF["DSR + PBO 게이트<br/>factor/research/overfitting.py"]
-        DSRF -->|"통과 시"| HOLD["opt-factor holdings<br/>매매 계획"]
-    end
-
-    subgraph TAA allocation["TAA 자산배분 (taa/)"]
-        FUNDS[(Sharadar funds bulk<br/>closeadj, 18개 ETF)] -->|"taa/data.py"| SIG["시그널<br/>13612w · sma13"]
-        SIG --> STRAT["StrategySpec 레지스트리<br/>9개 사전등록 설정"]
-        STRAT --> TBT["월간 백테스트<br/>taa/backtest.py"]
-        TBT --> EVAL["evaluate_all + 판정<br/>taa/evaluate.py"]
-        EVAL --> DSRF
-    end
-
-    subgraph Original VAA["VAA 원본 (strategies/)"]
-        YF[(yfinance<br/>일간 종가)] --> VAA["VAAStrategy<br/>strategies/vaa.py"]
-        VAA --> RUNPY["run.py / make run<br/>백테스트 + 리포트"]
-    end
-```
-
-## 사용법
-
-> 아래 적재·최적화 명령을 다시 돌리려면 [Sharadar](https://sharadar.com) 구독이
-> 필요하다. PIT 재무제표와 폐지 종목 커버리지를 함께 주는 유일한 소매 가격 소스다.
-> 어댑터는 중립적인 `Provider` 프로토콜 뒤에 격리돼 있어 소스 교체는 파일 하나를
-> 다시 쓰는 일이다.
-
-```bash
-# 데이터 적재 (Sharadar 구독 필요)
-export SHARADAR_API_KEY=...
-opt-factor ingest --store us.duckdb --provider sharadar \
-  --tables sf1,sep,daily,actions,sp500,tickers
-
-# 팩터 예측력 검증 — 10분할 · IC · 회전율
-uv run python scripts/factor_lab.py --store us.duckdb --factors GP_A,PER,SIZE
-
-# 공식 성과 (walk-forward + DSR)
-opt-factor optimize --store us.duckdb --config configs/strategy_lean_timed.json \
-  --space configs/space.json --objective calmar
-
-# 오늘 살 종목 (현재 보유를 주면 매매 계획까지)
-opt-factor holdings --store us.duckdb \
-  --config configs/strategy_lean_timed.json --current my_holdings.csv
-
-# TAA: 9개 구성 · PBO · 판정표
-uv run python scripts/run_taa.py
-```
-
-## 개발
-
-```bash
-make lint           # ruff check + format --check
-make typecheck      # mypy src/
-```
-
-패키지 관리는 **uv**(`uv.lock`)다. `pip install` 하지 않는다. 코드는
-`src/opt_portfolio/` 아래 `factor/`·`taa/`·`strategies/` 로 나뉘고 `analysis/`·`core/`
-를 공유한다.
-
-## 문서
-
-설계 문서는 [`docs/factor-system/`](docs/factor-system/) 에 있다 — 명세,
-**데이터 계약**(스토어 스키마 · PIT 규약 · 벤더 실측), walk-forward 수식, 그리고
-기각 목록이 담긴 **실험 로그**. 연구 저널은 [`docs/journal/`](docs/journal/README.ko.md),
-팩터 카탈로그는 [`docs/factor-library.ko.md`](docs/factor-library.ko.md).
+- **초소형주 표제 철회.** CAGR 23.78%를 기록하던 초소형주 8팩터 전략은 필수 방어 장치를 켜자 Sharpe `1.047 → −0.224`로 무너졌습니다. 자세한 경위는 [폐기한 것과 그 대가](docs/guide.ko.md#폐기한-것과-그-대가)를 참고하세요.
+- **TAA 9개 사전등록, 9개 전부 기각.** ETF 18종 월간 로테이션은 관문을 통과하지 못했습니다(`PBO 0.770`). 상세 내용은 [전술적 자산배분](docs/guide.ko.md#전술적-자산배분--9개-사전등록-9개-기각)과 [`docs/taa/01-results.md`](docs/taa/01-results.md)에 있습니다.
 
 ## 한계와 가정
 
-- **구간에 큰 낙폭이 세 번밖에 없다**(2008·2020·2022). 낙폭 방어를 주장하는 전략이
-  그 주장을 사건 세 개에 걸고 있다. 남은 한계 중 가장 크다.
-- **거래비용은 측정이 아니라 가정이다.** 15bps 와 50bps 를 모두 보고하고 결론은
-  양쪽에서 유지되지만, 실제 보유 종목의 실현 스프레드는 잰 적이 없다.
-- **팩터 집합 자체는 정산되지 않았다.** 124개를 훑어 5개를 골랐고, 그 탐색에는 아직
-  시도 횟수가 매겨지지 않았다. 전략 35개의 외부 탐색은 정산했다(PBO 0.303 · DSR 0.982).
-- **숫자는 2026-08-14 에서 멈춰 있다.** 이후 데이터로 다시 잰 것은 없다. Sharadar 데이터
-  공급은 2026-09-14 에 끊겨 로컬 스토어는 더는 재구축되지 않는다 — 지금 `ingest` 를 다시
-  돌려도 API 에서 받아오지 못하고, 저장소에 올라 있는 `results/` 만 재현할 수 있다.
-  세금은 반영하지 않았다.
-- TAA 는 채택이 0건이라 운용 결론이 없다. `strategies/` 의 VAA 원본은 다른 데이터
-  소스에서 in-sample 로 최적화한 것이다 — 비교하려면 `taa/` 숫자를 쓴다.
+- **구간 내 큰 낙폭이 세 번뿐입니다** (2008·2020·2022) — 낙폭 방어 주장은 사건 세 개에 근거합니다.
+- **거래비용은 측정이 아니라 가정입니다** — 15bps와 50bps를 모두 보고하지만 실제 보유 종목의 실현 스프레드는 측정하지 않았고, 세금도 반영하지 않았습니다.
+- **팩터 집합 탐색은 정산되지 않았습니다** — 124개를 훑어 5개를 고른 과정에는 시도 횟수가 매겨지지 않았습니다. 전략 35개의 외부 탐색은 정산했습니다(`PBO 0.303 · DSR 0.982`).
+- **숫자는 2026-08-14에서 멈춰 있습니다** — Sharadar 데이터 공급이 2026-09-14에 종료되어 라이브 `ingest`는 동작하지 않으며, 커밋된 `results/`만 재현할 수 있습니다.
+- **TAA는 채택 건수가 0건입니다** — `strategies/`의 VAA 원본은 다른 데이터 소스에서 in-sample로 최적화한 결과이므로 비교 시 `taa/` 수치를 사용하세요.
 
-> ⚠️ 모든 백테스트는 과거 데이터 기반이며 미래 수익을 보장하지 않는다.
+> ⚠️ 모든 백테스트는 과거 데이터 기반이며 미래 수익을 보장하지 않습니다.
+
+## 문서
+
+| 문서 | 내용 |
+|---|---|
+| [프로젝트 가이드](docs/guide.ko.md) | 아키텍처, CLI 사용법, 개발 명령, 폐기된 초소형주·TAA 상세 |
+| [팩터 라이브러리](docs/factor-library.ko.md) | 158개 팩터 카탈로그 및 문헌 근거 |
+| [연구 저널](docs/journal/README.ko.md) | 기각된 20개 이상의 후보와 PBO 수정 기록 |
+| [팩터 시스템 설계](docs/factor-system/) | 설계 명세, 데이터 계약, walk-forward 수식, 실험 로그 |
+| [작업 규약](docs/rules.md) | 절대 규칙과 알려진 제약 전문 |
+
+## 기여
+
+- 버그 제보 및 질문: [GitHub Issues](https://github.com/younghwan91/portfolio-research/issues)
+- 만든 사람: **채영환 (Younghwan Chae)** · [GitHub @younghwan91](https://github.com/younghwan91) · [LinkedIn](https://www.linkedin.com/in/younghwan-chae/)
 
 ## 라이선스
 
-MIT
-
-## 기여 및 이슈 제보
-
-- 🐛 버그 제보, 질문, 기능 제안: [GitHub Issues](https://github.com/younghwan91/portfolio-research/issues)
-- 📈 업데이트 소식: [팔로우 @younghwan91](https://github.com/younghwan91)
-
-
-## 만든 사람
-
-**채영환 (Younghwan Chae)** · [GitHub @younghwan91](https://github.com/younghwan91) · [LinkedIn](https://www.linkedin.com/in/younghwan-chae/)
-
-전체 오픈소스 퀀트 스택은 [프로필](https://github.com/younghwan91)에서 한눈에 볼 수 있습니다.
+[MIT](LICENSE)
