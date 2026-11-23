@@ -1,27 +1,31 @@
+<div align="center">
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/brand/wordmark-dark.svg">
   <img alt="portfolio-research" src="docs/images/brand/wordmark-light.svg" height="52">
 </picture>
 
-**English** · [한국어](README.ko.md)
+# portfolio-research
 
 **US equity factor research that charges for its own search — walk-forward only, Deflated Sharpe and PBO at the gate, and the rejections ship too.**
+
+Point-in-time fundamentals with delisted names retained, zero silent truncation, and full rejection logs.
 
 [![CI](https://github.com/younghwan91/portfolio-research/actions/workflows/ci.yml/badge.svg)](https://github.com/younghwan91/portfolio-research/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-younghwan--chae-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/younghwan-chae/)
 
-**Three things that are unusual about this repo**
+[Docs](docs/guide.md) · [Factor Library](docs/factor-library.md) · [Journal](docs/journal/README.md) · [한국어](README.ko.md)
 
-- **The search is paid for at the gate.** Every published number is walk-forward,
-  then deflated for the 35 strategies tried on top of it (Deflated Sharpe) and tested
-  for backtest overfitting (PBO). Single in-sample backtests are labelled reference-only.
-- **Nine tactical-allocation configurations were pre-registered, and all nine were
-  rejected.** The gate was not relaxed to rescue them; the verdict table ships.
-- **The README's own headline was retracted.** A micro-cap strategy held this spot
-  until the mandatory guards — minimum price, minimum dollar volume, slippage — were
-  switched on and it collapsed. The chart that killed it is still below.
+</div>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
+  <img alt="Cumulative growth over the walk-forward validation window, 2002-12 to 2026-08: large-cap 5-factor with 200-day timing reaches 36x at 15bps slippage and 27x at 50bps, against 14x for SPY buy-and-hold. Log vertical axis." src="docs/images/performance-light.png" width="100%">
+</picture>
+
+<p align="center"><sub>Log scale — equal slopes mean equal returns. The flat stretches in 2008, 2012, and 2022 are the 200-day overlay holding cash. (Chart labels are Korean; the alt text carries the reading.)</sub></p>
 
 ## Quick start
 
@@ -30,35 +34,21 @@ make install  # uv sync --extra dev — requires uv (https://docs.astral.sh/uv/)
 make test     # pytest + coverage — sanity-check the install
 ```
 
-No API key needed to explore the results that are already checked into the repo:
+Explore the checked-in results without any API key or vendor data:
 
 ```bash
-# Reproduce the strategy-search cost (DSR/PBO) — reads only results/oos/, no vendor data
+# Reproduce the strategy-search cost (DSR/PBO) — reads only results/oos/
 uv run python scripts/strategy_search_cost.py
 
 # Original VAA strategy — free data (yfinance), interactive menu
 make run
 ```
 
-Re-running the **factor engine** or **TAA** from scratch (ingesting fresh data,
-optimizing new configs) needs a [Sharadar](https://sharadar.com) subscription — see
-[Usage](#usage) below. Everything reported in this README was measured on data through
-2026-08-14, and the outputs in [`results/`](results/) are what ships, so the numbers can
-be checked without vendor data.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/performance-dark.png">
-  <img alt="Cumulative growth over the walk-forward validation window, 2002-12 to 2026-08: large-cap 5-factor with 200-day timing reaches 36x at 15bps slippage and 27x at 50bps, against 14x for SPY buy-and-hold. Log vertical axis." src="docs/images/performance-light.png" width="100%">
-</picture>
-
-*Log scale — equal slopes mean equal returns. The flat stretches in 2008, 2012 and
-2022 are the 200-day overlay holding cash; those three are where the drawdown
-parts company with SPY. (Chart labels are Korean; the alt text carries the reading.)*
+Everything reported here was measured on data through 2026-08-14 and ships in [`results/`](results/). Re-running the factor engine or TAA from scratch requires a [Sharadar](https://sharadar.com) subscription — see [Usage](docs/guide.md#usage).
 
 ## What is inside
 
-Three subsystems answer three separate questions, each measured against the same
-overfitting gate (Deflated Sharpe + PBO).
+Three isolated subsystems answer separate questions against the same overfitting gate (Deflated Sharpe + PBO). None imports another, except `taa/` → `factor.research.overfitting`.
 
 | | **Factor engine** (`factor/`) | **TAA allocation** (`taa/`) | **Original VAA** (`strategies/`) |
 |---|---|---|---|
@@ -68,17 +58,9 @@ overfitting gate (Deflated Sharpe + PBO).
 | Entry point | `opt-factor` · `opt-factor-tui` | `scripts/run_taa.py` | `make run` · `run.py` |
 | Outcome | **1 adopted** (large-cap) | **0 adopted** — all 9 failed the PBO gate | Kept as the record of why it failed |
 
-**None of the three imports another**, with one exception: `taa/` →
-`factor.research.overfitting` (DSR and PBO gate).
-
-- **Factor library — 158 factors.** Not 158 functions: a declarative expression DSL
-  generates TTM / QoQ / YoY / acceleration variants, and only factors with a documented
-  rationale are included (Novy-Marx 2013, Sloan 1996, Ball et al. 2016, Chen &
-  Zimmermann replications). Catalogue: [`docs/factor-library.md`](docs/factor-library.md).
-- **A strategy is one JSON file** in [`configs/`](configs/README.md) — adopted,
-  rejected and retired alike, operating parameters included.
-- **Point-in-time store** (`PITStore`, DuckDB) with first-print-wins fundamentals and
-  delisted names retained.
+- **158 factors via declarative DSL.** Generates TTM / QoQ / YoY / acceleration variants from documented academic signals (Novy-Marx 2013, Sloan 1996, Ball et al. 2016, Chen & Zimmermann). See [`docs/factor-library.md`](docs/factor-library.md).
+- **One JSON file per strategy.** Adopted, rejected, and retired configs — with operating parameters — live in [`configs/`](configs/README.md).
+- **Point-in-time store.** `PITStore` (DuckDB) enforces first-print-wins fundamentals and retains delisted tickers.
 
 ## What it looks like when it works
 
@@ -99,176 +81,53 @@ overfitting gate (Deflated Sharpe + PBO).
 | Deflated Sharpe (**35 strategy trials**) | **0.982** ✓ | 0.957 ✓ | — |
 | PBO (CSCV over 35 configs · monthly · S=16) | **0.303** ✓ | — | — |
 
-**This strategy is measured with the guards switched on** — $5 minimum price, $1M
-minimum dollar volume, and slippage. The universe is the historical S&P 500, so
-there is **no capacity limit**. Raising slippage to 50bps leaves drawdown and
-volatility unchanged and costs 1.4pp of return.
+**Measured with all guards switched on** — $5 minimum price, $1M minimum dollar volume, and slippage across the historical S&P 500 universe (no capacity limit). Raising slippage to 50bps leaves drawdown and volatility unchanged and costs 1.4pp of return.
 
-The last two rows charge for the search **outside** the walk-forward — "35 strategies
-were tried and one was picked". The reasoning behind the gate's settings (monthly,
-S=16) is below. Reproduce with `uv run python scripts/strategy_search_cost.py`; it
-reads only `results/oos/` and needs no vendor data.
+The last two rows charge for the search **outside** the walk-forward ("35 strategies were tried and one was picked"). Reproduce with `uv run python scripts/strategy_search_cost.py` using only `results/oos/`.
 
 <!-- PERFORMANCE:END -->
 
 ## Why it is built this way
 
-Quant backtests fail in a small number of well-known ways. Each one is blocked
-structurally here, under one design principle: **never fail silently.**
+Quant backtests fail in well-known ways. Each is blocked structurally under one principle: **never fail silently.**
 
 | Common failure | How it is prevented |
 |---|---|
-| **Survivorship bias** — only today's survivors are in the sample | Delisted names retained (Enron, old American Airlines, Ambac verified present) |
-| **Look-ahead** — using numbers before they were public | Expressions cannot touch raw tables; everything passes through `PanelContext`, which enforces `datekey` alignment |
-| **Restatement contamination** — using revised figures | **First print wins** — only the number the market originally saw is stored |
-| **Silent truncation** — partial data reported as success | Pagination raises `TruncatedDataError` when the expected range isn't reached |
-| **Overfitting** — run hundreds of variants, report the best | **Deflated Sharpe Ratio** + **PBO** charge for the number of trials |
-| **In-sample performance reporting** | Official performance is **walk-forward only**; single backtests are labelled reference-only |
+| **Survivorship bias** | Delisted names retained (Enron, old American Airlines, Ambac verified present) |
+| **Look-ahead** | Expressions cannot touch raw tables; `PanelContext` enforces `datekey` alignment |
+| **Restatement contamination** | **First print wins** — only the number the market originally saw is stored |
+| **Silent truncation** | Pagination raises `TruncatedDataError` when the expected range is not reached |
+| **Overfitting** | **Deflated Sharpe Ratio** + **PBO** charge for the number of trials |
+| **In-sample reporting** | Official performance is **walk-forward only**; single backtests are reference-only |
 
-### What was retired, and what it cost
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/guards-dark.png">
-  <img alt="Cumulative growth of the micro-cap strategy: 153x with the guards off, 0.040x with them on — a 96% loss of principal. Log vertical axis." src="docs/images/guards-light.png">
-</picture>
-
-*Same strategy, same window; the only difference is slippage, minimum price and
-minimum dollar volume. The blue line was this README's headline until 2026-08-16.*
-
-A **micro-cap, 8-factor strategy** at CAGR 23.78% stood here until the three guards
-the design document calls mandatory were switched on. They collapse it — **Sharpe
-1.047 → −0.224** — because 98% of the universe disappears with them on. The headline
-moved to the large-cap strategy, which had always been measured with its guards on and
-so had never been compared on equal terms.
-
-Over twenty candidates were rejected at the Deflated Sharpe gate, and the PBO number
-was published wrong twice before it was measured properly. **The whole trail is
-written down:** [`docs/journal/`](docs/journal/README.md).
-
-### Tactical asset allocation — nine pre-registered, nine rejected
-
-Monthly rotation across 18 ETFs. **Nine pre-registered configurations, all nine
-rejected: PBO = 0.770.** The gate was not relaxed.
-
-That does not mean nothing works. All six BAA variants (Keller 2022) beat 60/40 on
-Calmar without exception, 0.535–0.812 against 0.354 — but PBO across just those six is
-0.861, so **which one is best cannot be determined from this data.** Both sentences
-have to stand together.
-
-The nine configurations, the eight defects caught along the way, and why VAA measured
-6.07% here against the papers' 16–17% are in
-[`docs/taa/01-results.md`](docs/taa/01-results.md) (Korean) and
-[`docs/journal/`](docs/journal/README.md).
-
-## Architecture
-
-```mermaid
-flowchart LR
-    subgraph Factor engine
-        SH[(Sharadar<br/>sf1 · sep · daily · actions)] -->|"opt-factor ingest"| STORE[(PITStore<br/>us.duckdb)]
-        STORE --> CTX["PanelContext<br/>(datekey-aligned, no look-ahead)"]
-        CTX --> DSL["Factor DSL<br/>158 factors, factor/library"]
-        DSL --> UNIV["Universe filters<br/>price · dollar-volume · sector"]
-        UNIV --> PIPE["FactorPipeline.run<br/>factor/pipeline.py"]
-        PIPE --> BT["Backtest engine<br/>factor/backtest"]
-        BT --> WF["walk-forward optimize<br/>opt-factor optimize"]
-        WF --> DSRF["DSR + PBO gate<br/>factor/research/overfitting.py"]
-        DSRF -->|"passes"| HOLD["opt-factor holdings<br/>trade plan"]
-    end
-
-    subgraph TAA allocation
-        FUNDS[(Sharadar funds bulk<br/>closeadj, 18 ETFs)] -->|"taa/data.py"| SIG["Signals<br/>13612w · sma13"]
-        SIG --> STRAT["StrategySpec registry<br/>9 pre-registered configs"]
-        STRAT --> TBT["Monthly backtest<br/>taa/backtest.py"]
-        TBT --> EVAL["evaluate_all + verdict<br/>taa/evaluate.py"]
-        EVAL --> DSRF
-    end
-
-    subgraph Original VAA
-        YF[(yfinance<br/>daily closes)] --> VAA["VAAStrategy<br/>strategies/vaa.py"]
-        VAA --> RUNPY["run.py / make run<br/>backtest + report"]
-    end
-```
-
-## Usage
-
-> Reproducing the ingest/optimize commands below needs a
-> [Sharadar](https://sharadar.com) subscription — the only retail-priced source with
-> point-in-time fundamentals *and* delisted coverage. The adapter sits behind a neutral
-> `Provider` protocol, so swapping sources means rewriting one file.
-
-```bash
-# Ingest data (Sharadar subscription required)
-export SHARADAR_API_KEY=...
-opt-factor ingest --store us.duckdb --provider sharadar \
-  --tables sf1,sep,daily,actions,sp500,tickers
-
-# Screen factor predictive power — decile spread, IC, turnover
-uv run python scripts/factor_lab.py --store us.duckdb --factors GP_A,PER,SIZE
-
-# Official performance (walk-forward + Deflated Sharpe)
-opt-factor optimize --store us.duckdb --config configs/strategy_lean_timed.json \
-  --space configs/space.json --objective calmar
-
-# What to buy today (pass current holdings to get a trade plan)
-opt-factor holdings --store us.duckdb \
-  --config configs/strategy_lean_timed.json --current my_holdings.csv
-
-# TAA: 9 configurations · PBO · verdict table
-uv run python scripts/run_taa.py
-```
-
-## Develop
-
-```bash
-make lint       # ruff check + format --check
-make typecheck  # mypy src/
-```
-
-Dependencies are managed with **uv** (`uv.lock`). Do not use `pip install`. Code lives
-in `src/opt_portfolio/`: `factor/`, `taa/`, `strategies/`, with `analysis/` and
-`core/` shared.
-
-## Documentation
-
-Design documents are Korean, in [`docs/factor-system/`](docs/factor-system/) — specs,
-the **data contract** (store schema · PIT rules · vendor measurements), the
-walk-forward mathematics, and the **experiment log** with the full rejection list. In
-English: [`docs/journal/`](docs/journal/README.md) and
-[`docs/factor-library.md`](docs/factor-library.md).
+- **Micro-cap headline retracted.** An 8-factor micro-cap strategy (CAGR 23.78%) collapsed from Sharpe `1.047` to `−0.224` once mandatory guards were enabled. See [What was retired, and what it cost](docs/guide.md#what-was-retired-and-what-it-cost).
+- **Nine TAA configs pre-registered, nine rejected.** Monthly rotation across 18 ETFs failed the gate (`PBO = 0.770`). See [Tactical asset allocation](docs/guide.md#tactical-asset-allocation--nine-pre-registered-nine-rejected) and [`docs/taa/01-results.md`](docs/taa/01-results.md).
 
 ## Limitations
 
-- **The window contains only three major drawdowns** (2008, 2020, 2022). A strategy
-  whose claim is drawdown defence rests that claim on three events. This is the
-  largest remaining limitation.
-- **Transaction costs are an assumption, not a measurement.** 15bps and 50bps are both
-  reported and the conclusion holds at either, but the realised spread of the actual
-  holdings was never measured.
-- **The factor set itself is not charged.** 124 factors were screened to reach the five
-  in use, and no trial count pays for that search. The outer search over 35 strategies
-  *is* charged (PBO 0.303 · DSR 0.982).
-- **Numbers stop at 2026-08-14** and nothing has been re-measured on newer data. The
-  Sharadar feed was discontinued on 2026-09-14, so the local store no longer rebuilds
-  and re-running `ingest` against the live API will not succeed; the checked-in
-  `results/` are what can be reproduced. Taxes are not modelled.
-- TAA adopted nothing, so it has no operating conclusion. The original VAA in
-  `strategies/` is in-sample on a different data source — for comparison use `taa/`.
+- **Three major drawdowns only** (2008, 2020, 2022) — drawdown-defence claims rest on three events.
+- **Assumed transaction costs** — 15bps and 50bps are both reported, but realized spreads of actual holdings were never measured. Taxes are not modelled.
+- **Factor set screening is uncharged** — 124 factors were screened to reach the 5 in use; the outer search over 35 strategies *is* charged (`PBO 0.303`, `DSR 0.982`).
+- **Data stops at 2026-08-14** — the Sharadar feed was discontinued on 2026-09-14, so live `ingest` no longer rebuilds the local store; checked-in `results/` remain reproducible.
+- **No adopted TAA config** — `strategies/` (original VAA) is in-sample on yfinance; use `taa/` for fair comparison.
 
 > ⚠️ All backtests are historical and do not guarantee future returns.
 
+## Docs
+
+| Doc | What's inside |
+|---|---|
+| [Project Guide](docs/guide.md) | Architecture diagram, CLI usage, dev commands, retired micro-cap & TAA details |
+| [Factor Library](docs/factor-library.md) | 158-factor catalog and academic rationales |
+| [Research Journal](docs/journal/README.md) | Full trail of 20+ rejected candidates and PBO fixes |
+| [Factor System Specs](docs/factor-system/) | Design specs, data contract, walk-forward math, experiment log (Korean) |
+| [Rules & Constraints](docs/rules.md) | Absolute rules and known constraints (Korean) |
+
+## Contributing
+
+- Bug reports and questions: [GitHub Issues](https://github.com/younghwan91/portfolio-research/issues)
+- Author: **Younghwan Chae (채영환)** · [GitHub @younghwan91](https://github.com/younghwan91) · [LinkedIn](https://www.linkedin.com/in/younghwan-chae/)
+
 ## License
 
-MIT
-
-## Contributing & Issues
-
-- 🐛 Bugs & questions → [Issues](https://github.com/younghwan91/portfolio-research/issues)
-- 📈 Updates → [Follow @younghwan91](https://github.com/younghwan91)
-
-
-## Author
-
-**Younghwan Chae (채영환)** · [GitHub @younghwan91](https://github.com/younghwan91) · [LinkedIn](https://www.linkedin.com/in/younghwan-chae/)
-
-The full open-source quant stack is listed on the [profile](https://github.com/younghwan91).
+[MIT](LICENSE)

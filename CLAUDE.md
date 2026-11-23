@@ -83,7 +83,7 @@ uvx pre-commit run --all-files   # CI 의 pre-commit 잡과 같다 — 푸시 �
 - **pre-commit 의 `ruff-format` 은 마크다운 안 python 코드 블록도 고친다** — 문서만 고쳐도 `uvx pre-commit run
   --all-files` 를 돌린다(474ee78: 이걸로 푸시가 막혔다). 전역 git 훅이 커밋 때 `uvx pre-commit` 을, 푸시 때
   CI 를 로컬에서 돌린다. `.pre-commit-config.yaml` 을 고친 채 unstaged 로 두면 커밋이 거부된다.
-- 커밋 메시지는 **한국어** Conventional Commits(`feat(factor): ...`, `fix(taa): ...`, `docs(claude): ...`).
+- 커밋 메시지는 **영문** Conventional Commits(`feat(factor): ...`, `fix(taa): ...`, `docs(claude): ...`).
   본문에는 무엇을 고쳤는지가 아니라 **왜 그게 문제였는지**를 쓴다. 커밋 신원은 레포 git 설정 그대로 —
   `git -c user.email=...` 로 덮지 않는다(`commit-identity.yml` 이 거부).
 - 구 VAA 의 알려진 결함 둘(OU `range(1, forecast_days)`·클립된 μ)은 테스트가 현 동작을 고정한다 —
