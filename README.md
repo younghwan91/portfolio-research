@@ -27,6 +27,14 @@ Point-in-time fundamentals with delisted names retained, zero silent truncation,
 
 <p align="center"><sub>Log scale — equal slopes mean equal returns. The flat stretches in 2008, 2012, and 2022 are the 200-day overlay holding cash. (Chart labels are Korean; the alt text carries the reading.)</sub></p>
 
+## Key results
+
+- **Adopted: 1.** Large-cap 5-factor + 200-day timing: Sharpe 0.727 vs SPY 0.418 over 2002-12 – 2026-08, walk-forward only ([`results/oos/`](results/oos/)).
+- **It survives the search charge:** Deflated Sharpe 0.982 over 35 strategy trials, PBO 0.303 (monthly, S=16).
+- **Negative: daily PBO fails** (0.52–0.66 across block counts); only the monthly cadence passes, and both are printed by the reproduce script.
+- **Negative: TAA, 9 pre-registered, 9 rejected** (PBO 0.770) — [`docs/taa/01-results.md`](docs/taa/01-results.md).
+- **Negative: micro-cap headline retracted** — Sharpe 1.047 became -0.224 once the guards were on ([guide](docs/guide.md#what-was-retired-and-what-it-cost)).
+
 ## Quick start
 
 ```bash
@@ -37,7 +45,7 @@ make test     # pytest + coverage — sanity-check the install
 Explore the checked-in results without any API key or vendor data:
 
 ```bash
-# Reproduce the strategy-search cost (DSR/PBO) — reads only results/oos/
+# Reproduce the strategy-search cost (DSR/PBO) in ~6s — reads only results/oos/, no key
 uv run python scripts/strategy_search_cost.py
 
 # Original VAA strategy — free data (yfinance), interactive menu
@@ -122,6 +130,13 @@ Quant backtests fail in well-known ways. Each is blocked structurally under one 
 | [Research Journal](docs/journal/README.md) | Full trail of 20+ rejected candidates and PBO fixes |
 | [Factor System Specs](docs/factor-system/) | Design specs, data contract, walk-forward math, experiment log (Korean) |
 | [Rules & Constraints](docs/rules.md) | Absolute rules and known constraints (Korean) |
+
+## More from the same author
+
+- [kiwoom-client](https://github.com/younghwan91/kiwoom-client) — unofficial Python client and MCP server for the Kiwoom REST API (Korean brokerage).
+- [fin-checkup](https://github.com/younghwan91/fin-checkup) — traffic-light reading of Korean listed-company financials, with formulas and thresholds.
+- [swing-it](https://github.com/younghwan91/swing-it) — statistical validation framework that judges Korean-stock alpha hypotheses against random versions of themselves.
+- [macro-sector-agent](https://github.com/younghwan91/macro-sector-agent) — top-down US equity pipeline asking which industry is forgotten right now.
 
 ## Contributing
 

@@ -27,6 +27,14 @@
 
 <p align="center"><sub>세로축은 로그 스케일입니다 — 기울기가 같으면 수익률이 같습니다. 2008·2012·2022의 평평한 구간은 200일 이동평균이 현금으로 전환한 자리입니다.</sub></p>
 
+## 핵심 결과
+
+- **채택 1개.** 대형주 5팩터 + 200일 타이밍: 2002-12 ~ 2026-08 워크포워드 Sharpe 0.727 (SPY 0.418) ([`results/oos/`](results/oos/)).
+- **탐색 비용을 청구해도 통과:** 전략 35개 시행 기준 Deflated Sharpe 0.982, PBO 0.303 (월별, S=16).
+- **부정적 결과: 일별 PBO 는 탈락** (블록 수에 따라 0.52~0.66). 월별만 통과하며 재현 스크립트가 둘 다 출력합니다.
+- **부정적 결과: TAA 사전등록 9개 전부 탈락** (PBO 0.770) — [`docs/taa/01-results.md`](docs/taa/01-results.md).
+- **부정적 결과: 소형주 헤드라인 철회** — 가드를 켜자 Sharpe 1.047 이 -0.224 로 떨어졌습니다.
+
 ## 빠른 시작
 
 ```bash
@@ -122,6 +130,13 @@ make run
 | [연구 저널](docs/journal/README.ko.md) | 기각된 20개 이상의 후보와 PBO 수정 기록 |
 | [팩터 시스템 설계](docs/factor-system/) | 설계 명세, 데이터 계약, walk-forward 수식, 실험 로그 |
 | [작업 규약](docs/rules.md) | 절대 규칙과 알려진 제약 전문 |
+
+## 같은 저자의 도구
+
+- [kiwoom-client](https://github.com/younghwan91/kiwoom-client) — 키움 REST API 비공식 파이썬 클라이언트·MCP 서버
+- [fin-checkup](https://github.com/younghwan91/fin-checkup) — 상장사 재무제표를 신호등으로 읽는 무료 도구 (계산식·경계값 공개)
+- [swing-it](https://github.com/younghwan91/swing-it) — 한국 주식 알파 가설을 랜덤 버전과 겨루어 심사하는 검증 프레임워크
+- [macro-sector-agent](https://github.com/younghwan91/macro-sector-agent) — "지금 어느 산업이 잊혔나"를 묻는 미국 주식 하향식 리서치
 
 ## 기여
 
