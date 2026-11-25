@@ -1,6 +1,10 @@
 # GitHub Pages (legacy Jekyll build of README.md). jekyll-seo-tag reads these for OG/Twitter meta.
+# The image must come through `defaults` (page-level); seo-tag ignores a bare site-level `image`.
+# With an image present, seo-tag emits twitter:card=summary_large_image on its own.
 title: portfolio-research
 description: US equity factor research that charges for its own search — walk-forward only, Deflated Sharpe and PBO at the gate, and the rejections ship too.
-image: /docs/images/performance-light.png
-twitter:
-  card: summary_large_image
+defaults:
+  - scope:
+      path: ""
+    values:
+      image: /docs/images/performance-light.png
